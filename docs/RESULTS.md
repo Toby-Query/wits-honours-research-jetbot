@@ -11,8 +11,8 @@ python -m jetbot_twin --calibrated compare --session 2026-10-04
 ```
 
 **Done so far:** the two stationary experiments, the driver-chip test, the
-wheels-up sweep, the stall, the straight run and spin on the floor, and the
-held-out square.
+wheels-up sweep, the stall, the straight run and spin on the floor, the
+held-out square, and ten repeats of its corner.
 
 ## What the probe found
 
@@ -332,6 +332,50 @@ alike. The robot's heading from its outline is not reported: an outline is
 ambiguous by a half-turn and changes shape with perspective. The corners above
 come from the direction of travel along each side.
 
+## Experiment 8: ten short turns
+
+The square's corner on its own, ten times: ∓0.3 for 0.29 s, then a rest.
+Filmed from above at 30 fps and measured with the marker method of
+`tools/spin_video.py` (chassis centre to blue display). Each turn's angle is
+the heading 0.75–1.15 s after its command was sent, less the heading just
+before, using the robot's own record of when each command went out.
+
+![Angle turned against how long the command lasted](img/real_short_turns.png)
+
+| | |
+|---|---|
+| The ten turns | 104, 92, 88, 78, 126, 86, 100, 60, 106, 86° |
+| Mean, spread | 92.7°, standard deviation 17.7° (19 %) |
+| How long each command really lasted | 254 to 362 ms, for 290 asked |
+| Twin, given those durations | 80, 87, 80, 81, 111, 84, 91, 72, 84, 84° |
+| Robot minus twin | mean +7°, standard deviation 11° |
+
+**Most of the spread is not the robot. It is the command.** The turn was
+asked to last 290 ms and lasted anywhere from 254 to 362. Angle follows
+duration closely (correlation 0.82), at 5° for every 10 ms. Sending a motor
+command is fourteen register writes over I²C from Python on the Jetson; that
+takes tens of milliseconds and is not the same every time. The stock `jetbot`
+library sends commands the same way, so this is how the robot behaves in
+ordinary use, not a quirk of this test.
+
+**What is left is about 11° of real scatter per turn**, and a twin that is
+7° low on average. So for a quarter-turn on this floor: the twin is biased by
+about 8 %, and the robot repeats itself to about ±11° even when the timing is
+accounted for.
+
+**The twin is too sluggish in a short turn.** The robot gains 505° of turn
+per extra second of command; the twin gains 358°. In the first third of a
+second the real robot is turning faster than the twin thinks. The 2 s spin,
+where the steady rate dominates, hid this. The likeliest cause is that the
+twin's inertia about the vertical axis is too large: it is a sum over an
+estimated parts list, not a measurement.
+
+**What this says about the square.** Its corners were 78°, 116° and 133°
+against the twin's 85°, 89° and 94°. A spread of ±11° with a +7° bias covers
+the first of those and not the other two, so the square had something more
+going on than these in-place turns show: the robot arrives at each corner
+having just braked from 0.8 m/s, which these turns from rest do not test.
+
 ## What changed in the twin as a result
 
 | | Was | Now | From |
@@ -351,6 +395,7 @@ come from the direction of travel along each side.
 
 ## Still to do
 
-Repeats of the short turn, to find out how repeatable it is. `step_response`. Extra holds near full command, to look at the bend. And the hand
+The robot's inertia about the vertical axis, which the short turns say is
+overestimated. Tighter command timing in the agent. `step_response`. Extra holds near full command, to look at the bend. And the hand
 measurements: the robot's mass, the wheel's diameter, the cells'
 label.

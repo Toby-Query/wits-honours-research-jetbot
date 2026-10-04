@@ -24,7 +24,9 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-W = 360
+W = 720                                # wide enough that a robot filling a
+                                       # quarter of the frame still has a few
+                                       # hundred green pixels
 CHASSIS_M = 0.1336                     # the green box is this long
 
 
@@ -34,13 +36,25 @@ def needle(frame):
     hsv = cv2.cvtColor(s, cv2.COLOR_BGR2HSV)
     h, sat, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
     green = ((h > 35) & (h < 85) & (sat > 90) & (v > 70)).astype(np.uint8)
-    blue = ((h > 95) & (h < 130) & (sat > 120) & (v > 150)).astype(np.uint8)
-    mb = cv2.moments(blue, True)
+    blue = ((h > 95) & (h < 130) & (sat > 90) & (v > 120)).astype(np.uint8)
     pts = cv2.findNonZero(green)
-    if pts is None or len(pts) < 150 or mb["m00"] < 8:
+    if pts is None or len(pts) < 150:
         return None
     (gx, gy), (w, hh), _ = cv2.minAreaRect(pts)
-    bx, by = mb["m10"] / mb["m00"], mb["m01"] / mb["m00"]
+    # the display is the biggest blue thing on the robot; the USB sockets
+    # are blue too, but smaller and dimmer
+    n, lab, stats, cent = cv2.connectedComponentsWithStats(blue)
+    best = None
+    for k in range(1, n):
+        if stats[k, cv2.CC_STAT_AREA] < 12:
+            continue
+        if np.hypot(cent[k][0] - gx, cent[k][1] - gy) > 0.9 * max(w, hh):
+            continue                               # not on the robot
+        if best is None or stats[k, cv2.CC_STAT_AREA] > stats[best, cv2.CC_STAT_AREA]:
+            best = k
+    if best is None:
+        return None
+    bx, by = cent[best]
     return np.arctan2(by - gy, bx - gx), gx, gy, max(w, hh)
 
 
