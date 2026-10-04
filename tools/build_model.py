@@ -339,7 +339,44 @@ def tilt_range(fixed, place_at, cam_points):
     return clear(0), lo, hi
 
 
-def check(parts, mount, fixed, cable, cam_end, place_camera, cam_cad):
+# --------------------------------------------------------------------------
+# The cells. The kit ships without them, so Waveshare's CAD has an empty
+# holder. Three 18650s are added, lying across the robot the way the holder
+# takes them, alternating end to end as a series holder wires them.
+# --------------------------------------------------------------------------
+CELL_R, CELL_LEN = 0.0090, 0.0650          # an 18650 is nominally 18 x 65 mm.
+# The holder's cradles are cut to a 9.1 mm radius, and its two outer walls
+# carry a retaining ridge that stands in to 8.6 mm: a real cell is pressed
+# past that ridge and the wall springs. The clash test allows that 0.4 mm.
+CELL_WRAP, CELL_END = "#6a3fa0", "#c9ccd1"  # purple sleeve, as on this robot
+
+
+def cells_in(holder):
+    """Three cells placed in the holder's bounding box. Returns the meshes by
+    colour and each cell's (centre, radius, half length) for checking."""
+    lo, hi = holder.min(0), holder.max(0)
+    pitch = 0.0192          # bay to bay, measured off the holder's own ribs --
+                            # NOT a third of its width, which is 0.5 mm out
+    y = lo[1] + 0.0022 + CELL_R                       # resting on the holder's floor
+    xc, zc = (lo[0] + hi[0]) / 2, (lo[2] + hi[2]) / 2
+    out, cyl = {CELL_WRAP: [], CELL_END: []}, []
+    for k in range(3):
+        x = xc + pitch * (k - 1)
+        out[CELL_WRAP].append(barrel(CELL_R, CELL_LEN - 0.002, (x, y, zc)))
+        way = 1 if k % 2 == 0 else -1                 # + end alternates
+        out[CELL_END].append(barrel(CELL_R - 0.0008, 0.001, (x, y, zc + way * (CELL_LEN / 2 - 0.0005))))
+        out[CELL_END].append(barrel(0.0032, 0.0012, (x, y, zc + way * (CELL_LEN / 2 + 0.0004))))
+        out[CELL_END].append(barrel(CELL_R - 0.0008, 0.001, (x, y, zc - way * (CELL_LEN / 2 - 0.0005))))
+        cyl.append((np.array([x, y, zc]), CELL_R, CELL_LEN / 2))
+    return out, cyl
+
+
+def inside_cyl(points, centre, r, half, shrink=0.0004):
+    d = points - centre
+    return (np.hypot(d[:, 0], d[:, 1]) < r - shrink) & (np.abs(d[:, 2]) < half - shrink)
+
+
+def check(parts, mount, fixed, cable, cam_end, place_camera, cam_cad, cells=()):
     """Does the hand-built geometry fit the CAD it was added to?
 
     Waveshare's solids are taken as fitting each other. Everything added or
@@ -428,6 +465,28 @@ def check(parts, mount, fixed, cable, cam_end, place_camera, cam_cad):
     report(ok, "the mount's screws go through its foot",
            "" if ms else "no mount screws found")
 
+    if cells:
+        holder = verts("battery")
+        lo_, hi_ = holder.min(0), holder.max(0)
+        fit = all(lo_[0] - 1e-4 <= c[0] - r and c[0] + r <= hi_[0] + 1e-4
+                  and c[1] + r <= hi_[1] + 1e-4 and lo_[2] <= c[2] - h and c[2] + h <= hi_[2]
+                  for c, r, h in cells)
+        spare = (hi_[2] - lo_[2] - 2 * cells[0][2]) * 1e3
+        report(fit, "the three cells fit inside the holder",
+               f"{spare:.1f} mm of length to spare for the springs")
+        hits = []
+        for node in parts:
+            if node == "cells" or parts[node]["group"] == "fastener":
+                continue
+            pts = verts(node)
+            n = sum(int(inside_cyl(pts, *c).sum()) for c in cells)
+            if n:
+                hits.append(f"{node} ({n} points)")
+        report(not hits, "the cells pass through nothing, their own holder included",
+               ", ".join(hits))
+        gap = min(abs(cells[k + 1][0][0] - cells[k][0][0]) for k in range(2)) - 2 * CELL_R
+        report(gap > 0, "the cells do not overlap each other", f"{gap * 1e3:.1f} mm between them")
+
     low = min(verts(n)[:, 1].min() for n in parts)
     report(low > -0.0006, "nothing is below the floor", f"lowest point {low * 1e3:.2f} mm")
     return fails
@@ -512,7 +571,19 @@ def main():
             vs.append(v)
             fs.append(f + off)
 
-    problems = check(parts, mount, fixed, rv, cam_end, place_camera, cam_cad)
+    holder = np.vstack([np.vstack(vs) for vs, _ in parts["battery"]["by_colour"].values()])
+    cell_meshes, cell_cyl = cells_in(holder)
+    p = parts["cells"] = {"group": "cells", "name": "Cells", "by_colour": {},
+                          "desc": "3 x 18650 lithium-ion cells in series. Not in "
+                                  "Waveshare's CAD: the kit ships without them"}
+    for colour, lst in cell_meshes.items():
+        vs, fs = p["by_colour"].setdefault(colour, ([], []))
+        for v, f in lst:
+            off = sum(len(a) for a in vs)
+            vs.append(v)
+            fs.append(f + off)
+
+    problems = check(parts, mount, fixed, rv, cam_end, place_camera, cam_cad, cell_cyl)
     if problems:
         raise SystemExit(f"{problems} geometry check(s) failed: nothing written")
 

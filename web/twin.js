@@ -133,7 +133,7 @@ new GLTFLoader().load('./jetbot.glb', (g) => {
 const SIDEWAYS = { wheel_left: [0, 0, -1], wheel_right: [0, 0, 1], motor_left: [0, 0, -0.55],
   motor_right: [0, 0, 0.55], fastener_left: [0, 0, -0.8], fastener_right: [0, 0, 0.8],
   camera: [1.2, 0, 0], camera_mount: [0.8, 0, 0], antenna_a: [-0.9, 0, -0.5], antenna_b: [-0.9, 0, 0.5],
-  caster_a: [0.9, 0, 0], caster_b: [-0.9, 0, 0], base: [0, 0, 0] };
+  caster_a: [0.9, 0, 0], caster_b: [-0.9, 0, 0], base: [0, 0, 0], cells: [0, 0, 1.3] };
 function explode(k) {
   for (const [key, list] of Object.entries(nodes)) {
     const meta = partMeta[key];

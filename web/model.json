@@ -145,6 +145,22 @@
    ],
    "pieces": 1
   },
+  "cells": {
+   "group": "cells",
+   "name": "Cells",
+   "desc": "3 x 18650 lithium-ion cells in series. Not in Waveshare's CAD: the kit ships without them",
+   "centre": [
+    -0.0216,
+    0.06955,
+    0.0003
+   ],
+   "size": [
+    0.0564,
+    0.018,
+    0.067
+   ],
+   "pieces": 2
+  },
   "chassis": {
    "group": "chassis",
    "name": "Chassis",
