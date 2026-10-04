@@ -14,15 +14,16 @@ rpm = [42.7, 71.3, 98.8, 124.8, 156.6, 212.8, 268.1, 319.4, 421.1, 483.9]
 # 2 % of the above from 0.25 up). The pitch was the better of the two.
 
 [straight]
-# 0.5 for 2 s on 50 cm floor tiles, pack at 11.82 V. Measured by the user
-# against the tile lines.
-distance_m = 1.43
-# "maybe 5 to 10 cm" to the left, and "maybe 10 degrees or so"; the user is
-# not sure it started pointing straight, and it crossed tile joints.
-drift_m = 0.075
-heading_deg = 10.0
+# 0.5 for 2 s on 50 cm floor tiles, pack at 11.97 V, NO TAPE on the wheels.
+# Distance by the user against the tile lines; "deviated more than 25 cm from
+# the centre". Video: straight.mp4.
+distance_m = 1.47
+drift_m = -0.25          # to the robot's RIGHT, "more than 25 cm"
+# The earlier run, with a strip of tape still on the LEFT tyre from the wheel
+# video (tape_on/straight.csv): 1.43 m, 5-10 cm to the left, about 10 degrees.
 
 [spin]
+# TAPE ON the left tyre for this one (tape_on/).
 # -0.4 / +0.4 for 2 s, on one tile clear of the joints, pack at 11.77 V.
 # From the top-down slow-motion video (spin_slowmo.mp4, 240.3 fps) by
 # tools/spin_video.py: see spin_video.json. Counter-clockwise from above.
@@ -30,6 +31,7 @@ rotation_deg = 1033.0
 wander_m = 0.01
 
 [short_turns]
+# TAPE ON the left tyre for this one (tape_on/).
 # Ten turns of -0.3 / +0.3 for 0.29 s from rest, pack at 11.71 V. From the
 # top-down video (short_turns.mp4, 30 fps) by the marker method of
 # tools/spin_video.py; see short_turns_video.json. The commands really lasted

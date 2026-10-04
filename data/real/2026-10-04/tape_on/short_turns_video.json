@@ -1,0 +1,46 @@
+{
+ "video": "data/real/2026-10-04/short_turns.mp4",
+ "each_turn_deg": [
+  103.9,
+  91.5,
+  88.5,
+  78.2,
+  126.2,
+  86.2,
+  100.1,
+  60.4,
+  105.8,
+  85.8
+ ],
+ "turn_durations_s": [
+  0.274,
+  0.293,
+  0.276,
+  0.278,
+  0.362,
+  0.287,
+  0.308,
+  0.254,
+  0.287,
+  0.285
+ ],
+ "mean_deg": 92.7,
+ "sd_deg": 17.7,
+ "total_deg": 926.6,
+ "twin_each_deg": [
+  79.5,
+  86.7,
+  80.2,
+  80.9,
+  111.0,
+  84.5,
+  91.5,
+  72.2,
+  83.7,
+  83.7
+ ],
+ "deg_per_s_of_command": 505.0,
+ "residual_sd_deg": 10.8,
+ "robot_minus_twin_mean_deg": 7.3,
+ "robot_minus_twin_sd_deg": 11.1
+}

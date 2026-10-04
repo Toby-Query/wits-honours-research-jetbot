@@ -1,0 +1,12 @@
+{
+ "video": "data/real/2026-10-04/spin_slowmo.mp4",
+ "true_fps": 240.33212619113766,
+ "rotation_deg": 1032.6535308711398,
+ "turns": 2.8684820301976104,
+ "direction": "counter-clockwise",
+ "steady_rate_deg_s": 503.66076771047483,
+ "moving_for_s": 1.98475338091354,
+ "heading_scatter_at_rest_deg": 0.862770546319018,
+ "frames_without_a_reading": 11,
+ "ended_this_far_from_start_m": 0.009172977798847065
+}
