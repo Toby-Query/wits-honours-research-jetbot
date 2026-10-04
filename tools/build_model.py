@@ -212,6 +212,46 @@ def box(size, centre, deg=0.0, pivot=None):
     return v, np.asarray(m.faces)
 
 
+def inside_box(points, corners, shrink=0.0003):
+    """Which points lie inside a box given by its eight corners (any
+    orientation), ignoring a skin `shrink` deep so that touching is allowed."""
+    o = corners.mean(0)
+    hit = np.ones(len(points), bool)
+    for far in (1, 2, 4):                      # trimesh orders corners in binary
+        e = corners[far] - corners[0]
+        half = np.linalg.norm(e) / 2
+        hit &= np.abs((points - o) @ (e / (2 * half))) < half - shrink
+    return hit
+
+
+# The ribbon between the camera and the Jetson. Its Jetson end is where
+# Waveshare's CAD has it (the CSI connector does not move); its camera end
+# follows the camera. It is redrawn, not moved: moving the CAD cable with the
+# camera is what left it hanging in mid-air.
+FFC_JETSON = (0.0302, 0.0908, 0.00675)     # centre of the cable's end, from the CAD
+FFC_CAMERA_CAD = (0.05365, 0.1047, 0.0001)
+FFC_WIDTH = 0.016
+
+
+def ribbon(a, a_dir, b, b_dir, reach=0.030, n=48):
+    """A flat strip along a cubic from a (leaving along a_dir) to b
+    (arriving against b_dir). Returns (vertices, faces, centreline)."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    p1 = a + np.append(np.asarray(a_dir) * reach, 0.0)
+    p2 = b + np.append(np.asarray(b_dir) * reach, 0.0)
+    t = np.linspace(0, 1, n)[:, None]
+    line = ((1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * p1
+            + 3 * (1 - t) * t ** 2 * p2 + t ** 3 * b)
+    left, right = line.copy(), line.copy()
+    left[:, 2] -= FFC_WIDTH / 2
+    right[:, 2] += FFC_WIDTH / 2
+    verts = np.vstack([left, right])
+    faces = []
+    for k in range(n - 1):
+        faces += [[k, k + 1, n + k], [k + 1, n + k + 1, n + k]]
+    return verts, np.array(faces), line
+
+
 def barrel(radius, length, centre):
     m = trimesh.creation.cylinder(radius=radius, height=length, sections=28)
     return np.asarray(m.vertices) + np.asarray(centre), np.asarray(m.faces)
@@ -258,6 +298,82 @@ def hinged_mount(pitch):
     return out
 
 
+def check(parts, mount, cable, cam_end, place_camera):
+    """Does the hand-built geometry fit the CAD it was added to?
+
+    Waveshare's solids are taken as fitting each other. Everything added or
+    moved here -- the mount, the camera, the cable, the screws -- is tested
+    against them and against each other. Returns the number of failures.
+
+    What this is not: a general clash test between Waveshare's own parts,
+    and it tests their vertices against the added boxes, so a face that
+    passes clean through a box without a vertex inside would be missed.
+    """
+    fails = 0
+
+    def report(ok, what, detail=""):
+        nonlocal fails
+        fails += not ok
+        print(f"  [{'PASS' if ok else 'FAIL'}] {what}" + (f"  --  {detail}" if detail else ""))
+
+    def verts(node):
+        return np.vstack([np.vstack(vs) for vs, _ in parts[node]["by_colour"].values()])
+
+    boxes = [v for lst in mount.values() for v, f in lst if len(v) == 8]
+    solid = [n for n in parts if parts[n]["group"] not in
+             ("camera_mount", "camera", "fastener")]
+    print("geometry checks")
+    hits = []
+    for node in solid:
+        pts = verts(node)
+        n = sum(int(inside_box(pts, b).sum()) for b in boxes)
+        if n:
+            hits.append(f"{node} ({n} points)")
+    report(not hits, "the mount passes through no other part", ", ".join(hits))
+
+    fixed = [b for b in boxes if b[:, 0].max() <= CHASSIS_FRONT + 1e-6]
+    cam = np.vstack([np.vstack(vs) for c, (vs, _) in parts["camera"]["by_colour"].items()
+                     if c != "#d8d4c4"])
+    screws = np.abs(np.abs(cam[:, 2]) - 0.0105) < 0.0025        # the four M1.6
+    n = sum(int(inside_box(cam[~screws], b).sum()) for b in fixed)
+    report(n == 0, "the camera clears the upright at this tilt", f"{n} points inside" if n else "")
+
+    lo = min(b[:, 0].min() for b in boxes)
+    report(lo > BOARDS_FRONT, "the upright is wholly ahead of the circuit boards",
+           f"rearmost point {lo * 1e3:.1f} mm, boards end at {BOARDS_FRONT * 1e3:.1f} mm")
+    foot = min(b[:, 1].min() for b in boxes)
+    report(abs(foot - CHASSIS_TOP) < 0.0005, "the mount stands on the chassis",
+           f"its foot is {(foot - CHASSIS_TOP) * 1e3:+.2f} mm from the chassis top")
+
+    ends = cable[[0, len(cable) // 2 - 1]]
+    d_j = np.linalg.norm(ends[0][:2] - np.array(FFC_JETSON[:2]))
+    d_c = np.linalg.norm(ends[1][:2] - cam_end[:2])
+    report(d_j < 0.001, "the ribbon ends in the Jetson's connector", f"{d_j * 1e3:.2f} mm off")
+    report(d_c < 0.001, "the ribbon ends in the camera's connector", f"{d_c * 1e3:.2f} mm off")
+    n = sum(int(inside_box(cable, b).sum()) for b in boxes)
+    for node in ("heatsink", "fan"):
+        pts = verts(node)
+        lo_, hi_ = pts.min(0), pts.max(0)
+        n += int(np.all((cable > lo_ + 0.0005) & (cable < hi_ - 0.0005), axis=1).sum())
+    report(n == 0, "the ribbon passes through nothing", f"{n} points inside something" if n else "")
+
+    sc = cam[screws]
+    centre = np.array([BOARD_AT[0], BOARD_AT[1]])
+    centre = rot_z(np.array([[centre[0], centre[1], 0.0]]), PIVOT, CAM_PITCH_DEG)[0][:2]
+    far = np.linalg.norm(sc[:, :2] - centre, axis=1).max() if len(sc) else 9.0
+    report(len(sc) > 0 and far < 0.016, "the camera's screws are in the camera board",
+           f"furthest is {far * 1e3:.1f} mm from the board's centre")
+    ms = [np.vstack(vs) for c, (vs, _) in parts["camera_mount"]["by_colour"].items()
+          if c == "#9aa0a6"]
+    ok = bool(ms) and BOARDS_FRONT < ms[0][:, 0].min() and ms[0][:, 0].max() < CHASSIS_FRONT
+    report(ok, "the mount's screws go through its foot",
+           "" if ms else "no mount screws found")
+
+    low = min(verts(n)[:, 1].min() for n in parts)
+    report(low > -0.0006, "nothing is below the floor", f"lowest point {low * 1e3:.2f} mm")
+    return fails
+
+
 def main():
     parts = {}                     # node name -> dict(meshes by colour, meta)
     all_leaves = tessellated()
@@ -269,11 +385,23 @@ def main():
         g = rot_z(g, cam_c[:2], -cad_pitch)
         g = g + np.array([BOARD_AT[0] - cam_c[0], BOARD_AT[1] - cam_c[1], 0.0])
         return rot_z(g, PIVOT, CAM_PITCH_DEG)
+    foot_x = (BOARDS_FRONT + CHASSIS_FRONT) / 2
     for path, v, f in all_leaves:
         v, f = np.asarray(v, float), np.asarray(f, int)
         group, name, desc, colour = classify(path[1:])
-        if group == "camera_mount":
+        label = " ".join(path)
+        if group == "camera_mount" or "FFC" in label:
             continue                               # replaced, see above
+        shift = None
+        if "M1_6" in label:
+            group, name = "camera", "Camera screws"   # they go where the camera goes
+        elif "M3X6" in label:
+            g0 = to_gltf(v)
+            c0 = (g0.min(0) + g0.max(0)) / 2
+            if 0.030 < c0[0] < 0.042 and 0.050 < c0[1] < 0.056 and abs(c0[2]) < 0.016:
+                # the two that held the CAD's bracket: now through the new foot
+                group, name = "camera_mount", "Mount screws"
+                shift = np.array([foot_x - c0[0], 0.0, np.sign(c0[2]) * 0.007 - c0[2]])
         side = ""
         cz = v[:, 2].mean()
         if group in ("wheel", "motor") or (group == "fastener" and "M3_X_30" in " ".join(path)):
@@ -297,18 +425,33 @@ def main():
         g = to_gltf(v)
         if group == "camera":
             g = place_camera(g)
+        if shift is not None:
+            g = g + shift
         vs.append(g)
         fs.append(f + off)
 
-    p = parts["camera_mount"] = {
-        "group": "camera_mount", "name": "Camera mount", "by_colour": {},
-        "desc": "Hinged aluminium bracket with a tilting plate and spacer"}
+    # the ribbon: up out of the Jetson's connector, over, and down into the
+    # camera's, which is on the top edge of the camera board
+    cam_end = place_camera(np.array([FFC_CAMERA_CAD]))[0]
+    up = rot_z(np.array([[0.0, 1.0, 0.0]]), (0.0, 0.0), CAM_PITCH_DEG)[0][:2]
+    rv, rf, ffc_line = ribbon(FFC_JETSON, (0.0, 1.0), cam_end, up)
+    cvs, cfs = parts["camera"]["by_colour"].setdefault("#d8d4c4", ([], []))
+    cvs.append(rv)
+    cfs.append(rf + sum(len(a) for a in cvs[:-1]))
+
+    p = parts.setdefault("camera_mount", {"by_colour": {}})
+    p.update({"group": "camera_mount", "name": "Camera mount",
+              "desc": "Hinged aluminium bracket with a tilting plate and spacer"})
     for colour, lst in mount.items():
         vs, fs = p["by_colour"].setdefault(colour, ([], []))
         for v, f in lst:
             off = sum(len(a) for a in vs)
             vs.append(v)
             fs.append(f + off)
+
+    problems = check(parts, mount, rv, cam_end, place_camera)
+    if problems:
+        raise SystemExit(f"{problems} geometry check(s) failed: nothing written")
 
     scene = trimesh.Scene()
     meta = {"frame": "glTF: x forward, y up, z right, metres; origin on the "

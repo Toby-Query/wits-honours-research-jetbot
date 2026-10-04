@@ -109,6 +109,22 @@ assumptions` lists what is unverified.
 No geometry is redrawn. What is added: part names (theirs do not survive the
 file format), colours, and the change of frame.
 
+One part is not Waveshare's. Their CAD has a fixed camera bracket; this robot
+has a hinged one, so the bracket is dropped and a hinged mount is built in its
+place from photographs of the robot (a likeness: sized against the 25 mm
+camera board, not measured). The camera is moved onto it, its four screws go
+with it, and the ribbon cable is redrawn between its two connectors.
+
+Because that geometry is hand-made, the build checks it before writing
+anything, and writes nothing if a check fails: the mount passes through no
+other part, the upright is wholly ahead of the circuit boards and stands on
+the chassis, the camera clears the upright at the tilt set, the ribbon starts
+in the Jetson's connector, ends in the camera's and passes through nothing,
+and every screw is in the part it holds. The limits of that check: it does not
+test Waveshare's own parts against each other, and it tests their vertices
+against the added shapes, so a large flat face passing clean through one could
+be missed.
+
 ## Other simulators
 
 ```bash

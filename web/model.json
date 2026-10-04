@@ -86,16 +86,16 @@
    "name": "Camera",
    "desc": "IMX219-160, 8 MP, 160 degree lens, and its ribbon",
    "centre": [
-    0.04953,
-    0.10847,
-    0.00125
+    0.04985,
+    0.10668,
+    0.00112
    ],
    "size": [
-    0.03995,
-    0.04094,
-    0.0275
+    0.0393,
+    0.03736,
+    0.02725
    ],
-   "pieces": 2
+   "pieces": 3
   },
   "camera_mount": {
    "group": "camera_mount",
@@ -103,15 +103,15 @@
    "desc": "Hinged aluminium bracket: folded upright, pivot screw, tilting plate, spacer. Modelled from a photograph of this robot, not from Waveshare's CAD, which shows a fixed one",
    "centre": [
     0.04325,
-    0.0832,
+    0.08108,
     0.0
    ],
    "size": [
     0.0155,
-    0.0606,
+    0.06485,
     0.0322
    ],
-   "pieces": 3
+   "pieces": 4
   },
   "caster_a": {
    "group": "caster",
@@ -182,12 +182,12 @@
    "name": "Screws",
    "desc": "Fasteners",
    "centre": [
-    -0.01677,
+    -0.02199,
     0.06813,
     0.00275
    ],
    "size": [
-    0.13604,
+    0.12559,
     0.10911,
     0.0711
    ],
