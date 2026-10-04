@@ -1,10 +1,14 @@
-# Session 2026-10-04. Pack charged (12.35 V at rest), charger unplugged.
+# Session 2026-10-04. Pack charged (12.2-12.35 V at rest), charger unplugged.
 
 [wheels_up_sweep]
-# Steady wheel speed in each hold, rpm, from the phone video
-# (wheels_up_sweep.mp4, 30 fps) by tools/wheel_video.py; see wheel_speed.json.
-# Read from the hub's eight holes, so each value is known modulo 225 rpm and
-# unwrapped on the assumption that speed rises with command. The soundtrack's
-# motor tone agrees with every one to within 8 %.
+# Steady wheel speed in each hold, rpm. From the slow-motion video
+# (wheels_up_sweep_slowmo.mp4, 240.3 fps true) by tools/wheel_tape.py, which
+# tracks a strip of tape on the hub in every frame: see wheel_speed_slowmo.json.
+# Nothing is aliased or unwrapped. Scatter within a hold is 4-10 rpm.
 #       0.10  0.15  0.20   0.25   0.30   0.40   0.50   0.60   0.80   1.00
-rpm = [40.5, 68.5, 93.8, 119.7, 147.2, 200.0, 252.1, 306.5, 415.9, 464.4]
+rpm = [42.7, 71.3, 98.8, 124.8, 156.6, 212.8, 268.1, 319.4, 421.1, 483.9]
+
+# An earlier run, filmed at 30 fps with no tape (run1/), gave by the hub's
+# holes 40.5 68.5 93.8 119.7 147.2 200.0 252.1 306.5 415.9 464.4 (about 5 %
+# low) and by the motor's pitch 39 62 93 128 156 215 272 323 425 488 (within
+# 2 % of the above from 0.25 up). The pitch was the better of the two.

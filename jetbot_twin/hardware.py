@@ -105,15 +105,16 @@ class Hardware:
     # (Waveshare). Waveshare do not say at what voltage. The figures below are
     # for the common 6 V TT motor; if yours turn out to be 12 V units, ke
     # doubles and r roughly quadruples. This is the first thing to measure.
-    # 2026-10-04, wheels-up sweep filmed and timed (docs/RESULTS.md): the
-    # measured speeds fit "240 rpm at 6 V" to within 0.2 %. So these ARE the
-    # ordinary 6 V motors, run from a 12 V pack.
-    motor_v_rated: float = measured(6.0, "wheels-up sweep 2026-10-04: 240 rpm at "
-                                    "6 V reproduces the measured speeds")
-    motor_rpm_noload: float = datasheet(240.0, "Waveshare: idle speed 240 RPM; "
-                                        "fitted value 240.5")
-    motor_i_noload: float = measured(0.237, "fitted to the bus sag in the wheels-up "
-                                     "sweep, 2026-10-04 (was assumed 0.16)")
+    # 2026-10-04, wheels-up sweep filmed in slow motion (docs/RESULTS.md): the
+    # measured speeds fit 255 rpm at 6 V. So these ARE ordinary 6 V motors,
+    # run from a 12 V pack.
+    motor_v_rated: float = measured(6.0, "wheels-up sweep 2026-10-04: a 6 V motor "
+                                    "reproduces the measured speeds")
+    motor_rpm_noload: float = measured(255.0, "fitted to wheel speeds from the "
+                                       "slow-motion video, 2026-10-04. Waveshare "
+                                       "say 240: these run 6 % faster")
+    motor_i_noload: float = measured(0.197, "fitted to the wheels-up sweep, "
+                                     "2026-10-04 (was assumed 0.16)")
     motor_r: float = measured(3.45, "fitted to the bus sag with the wheels held, "
                               "2026-10-04 (was assumed 4.0). Inferred through the "
                               "pack resistance, not metered")
@@ -123,9 +124,15 @@ class Hardware:
     rotor_inertia: float = assumed(1.7e-7, "130-size armature, kg.m2 at the rotor")
     motor_friction_static_ratio: float = assumed(
         1.4, "breakaway friction over running friction")
-    motor_coulomb_fraction: float = assumed(
-        0.7, "share of the no-load loss that is dry friction (rest is viscous)")
+    motor_coulomb_fraction: float = measured(
+        0.56, "share of the no-load loss that is dry friction (rest is viscous); "
+        "fitted to the wheels-up sweep, 2026-10-04 (was assumed 0.7)")
     wheel_inertia: float = assumed(1.8e-5, "34 g wheel as a ring at 0.7 r")
+    # Loss that grows with the SQUARE of speed, as torque at the wheel per
+    # (rad/s)^2. Zero in the twin as designed. The real wheel's speed bends
+    # over near full command (docs/RESULTS.md), which nothing linear explains:
+    # at 480 rpm the rotor is at 23 000 rpm, twice what the motor is made for.
+    motor_drag2: float = assumed(0.0, "no speed-squared loss until measured")
 
     # ----------------------------------------------------------- motor drivers
     # The board has footprints for both; which is fitted decides how the

@@ -1,0 +1,7 @@
+{
+ "motor_rpm_noload": 258.63089892408317,
+ "motor_i_noload": 0.17252398878750103,
+ "motor_coulomb_fraction": 0.6066513544163408,
+ "motor_drag2": 2.691250885028283e-06,
+ "motor_r": 3.45
+}

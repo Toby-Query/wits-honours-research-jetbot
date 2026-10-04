@@ -101,7 +101,7 @@ def test_ina219_reads_the_charger_not_the_load():
     tw.robot.set_motors(0.6, 0.6)
     tw.sleep(1.0)
     t = tw.telemetry()
-    assert t["i_pack"] > 0.5
+    assert t["i_pack"] > 0.3
     assert abs(t["charge_i"]) < 0.01          # unplugged: it sees nothing
     tw.plug_charger()
     tw.robot.stop()

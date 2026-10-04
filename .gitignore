@@ -15,3 +15,7 @@ reference/inspect.log
 results/twin/
 results/serve_test.log
 results/build_model.log
+
+# phone videos: large. Keep them, but not in git
+*.mp4
+*.mov

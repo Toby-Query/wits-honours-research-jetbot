@@ -111,70 +111,79 @@ over four registers when its auto-increment bit is set. The first run of this
 test therefore moved nothing. The agent now writes one register at a time, as
 the Adafruit library does, and reads one back to confirm.
 
-## Experiment 3: the wheels-up sweep (pack charged, 12.35 V)
+## Experiment 3: the wheels-up sweep (pack charged, 12.2 V)
 
-Ten commands from 0.1 to 1.0, two seconds each, wheels in the air, filmed.
-Wheel speed is read from the video by `tools/wheel_video.py`: the hub's eight
-holes give the wheel's angle frame by frame, and the motor's pitch on the
-soundtrack gives an independent check.
+Ten commands from 0.1 to 1.0, two seconds each, wheels in the air. Run twice.
+The second run was filmed in slow motion with a strip of tape on the hub, and
+`tools/wheel_tape.py` reads the wheel's angle from the tape in every frame.
+The true frame rate, 240.3 fps, comes from the holds themselves, which start
+exactly 3 s apart. Nothing is aliased, and speed within a hold is steady to
+4–10 rpm.
 
 ![Bus voltage through the sweep, robot and twin](img/real_wheels_up_sweep.png)
 
-| Command | Robot, rpm | Twin as designed | Twin calibrated | Sound check, rpm |
-|---|---|---|---|---|
-| 0.10 | 40 | 30 | 24 | 39 |
-| 0.15 | 68 | 57 | 52 | 62 |
-| 0.20 | 94 | 84 | 79 | 93 |
-| 0.25 | 120 | 109 | 105 | 128 |
-| 0.30 | 147 | 136 | 132 | 156 |
-| 0.40 | 200 | 190 | 187 | 215 |
-| 0.50 | 252 | 241 | 239 | 272 |
-| 0.60 | 306 | 293 | 293 | 323 |
-| 0.80 | 416 | 398 | 399 | 425 |
-| 1.00 | 464 | 502 | 504 | 488 |
+| Command | Robot, rpm | Twin as designed | Twin calibrated |
+|---|---|---|---|
+| 0.10 | 43 | 30 | 34 |
+| 0.15 | 71 | 56 | 62 |
+| 0.20 | 99 | 83 | 90 |
+| 0.25 | 125 | 107 | 115 |
+| 0.30 | 157 | 133 | 143 |
+| 0.40 | 213 | 187 | 198 |
+| 0.50 | 268 | 238 | 252 |
+| 0.60 | 319 | 290 | 307 |
+| 0.80 | 421 | 394 | 414 |
+| 1.00 | 484 | 496 | 519 |
+| error, rms | | 22 rpm (14 %) | 16 rpm (8 %) |
 
-**The prediction held.** The twin as designed, before anything about the
-motors had been measured, is within 10–17 rpm of the robot from 0.1 to 0.8.
-Against the predictions recorded beforehand for the TB6612FNG
-([predictions.txt](../results/predictions.txt)):
+"As designed" is the twin with the motors as originally assumed and only the
+pack fitted. "Calibrated" has the motor's speed constant, friction and the
+split between constant and speed-dependent friction fitted to this table.
+
+**The predictions held.** Against what was recorded beforehand for the
+TB6612FNG ([predictions.txt](../results/predictions.txt)):
 
 | | Predicted, 5–95 % | Measured |
 |---|---|---|
 | Lowest command that turns a free wheel | 0.10 | 0.10 |
-| Free wheel at 0.5 | 199 – 284 rpm | 252 rpm |
-| Free wheel at 1.0 | 413 – 596 rpm | 464 rpm |
+| Free wheel at 0.5 | 199 – 284 rpm | 268 rpm |
+| Free wheel at 1.0 | 413 – 596 rpm | 484 rpm |
 | Shape | a straight line from 0.1 | a straight line from 0.1 to 0.8 |
-| When the command returns to zero | brakes | stops within about 0.15 s (from the sound) |
+| When the command returns to zero | brakes | stops in 0.09–0.20 s |
 
-**The motors are ordinary 6 V units.** Fitting the motor's speed constant to
-these speeds gives 240.5 rpm at 6 V against Waveshare's "240 RPM". So the
-assumption the twin was built on was right, and so is its consequence: at a
-command of 1.0 these motors are run at twice their rated voltage.
+**The motors are 6 V units running about 6 % fast.** The fitted speed
+constant is 255 rpm at 6 V against Waveshare's "240 RPM". At a command of 1.0
+they are at twice their rated voltage.
 
-**Calibration did not improve the speeds**, and that is worth saying plainly.
-The calibrated twin is 13–17 rpm low on nine holds and 39 rpm high on the
-tenth; the as-designed twin was 10–17 low and 38 high. What calibration fixed
-is the current: the voltage dips now match much better (see the stall, below).
-The speed error that remains is one the model cannot remove by changing its
-numbers, for a reason visible in the table: **the robot's speed stops rising in
-proportion at the top.** From 0.6 to 0.8 it gains 110 rpm; from 0.8 to 1.0,
-only 48. The twin's motor is linear and has no such bend, so the fit splits the
-difference. Either the real motor genuinely falls away near full voltage
-(brush and iron losses rising with speed, which the twin does not model), or
-the 1.0 reading is wrong.
+**The dynamics agree without being fitted.** At a command of 0.5 the wheel
+reaches 63 % of its speed in 83 ms and stops in 162 ms; the twin gives 80 ms
+and 140 ms. Nothing was adjusted to get those: they follow from the assumed
+rotor inertia and the braking the driver chip does.
 
-**How far to trust the speeds.** The video is 30 frames a second, and the
-hub's eight holes look the same every 45 degrees, so each reading is only
-known modulo 225 rpm. They were unwrapped by assuming speed rises with
-command. The sound agrees with every reading to within 8 %, but runs
-consistently about 6 % above the picture, which is unexplained (it would fit a
-gear ratio of about 51 rather than 48, or a bias in picking the tone). A
-slow-motion retake with a strip of tape on the tyre would remove the
-unwrapping assumption and settle the top two points.
+**What the twin still gets wrong.** After calibration it is 7–17 rpm low from
+0.1 to 0.8 and 35 rpm high at 1.0. The cause is one feature of the real motor:
+its speed stops rising in proportion at the top. From 0.6 to 0.8 it gains
+102 rpm; from 0.8 to 1.0, 63, where a straight line would give about 105. And
+at 1.0 the robot draws *less* current than the twin (156 mV of sag against
+178), not more. Slower and drawing less means the motor is seeing less voltage
+than the twin thinks, or its back-EMF constant is not constant. I tried adding
+a loss that grows with the square of speed (`motor_drag2`); it did not help,
+because it would raise the current, which is already too high. This is
+unexplained. Holds at 0.85, 0.9 and 0.95 would show whether the bend is
+gradual or sudden, which would narrow it down.
 
-Also from the soundtrack: the PWM whine is at about 1560 Hz, not the 1526 Hz
-the chip's arithmetic gives. The PCA9685's oscillator is running about 2 %
-fast, within its tolerance.
+**Two runs, and the floor they set.** The voltage dips in the two runs differ
+by 24 mV rms, hold for hold. Much of that is the Jetson's own draw wandering.
+The calibrated twin's dips differ from the robot's by 21 mV rms: as close as
+the robot is to itself.
+
+**The first run, at 30 fps with no tape**, is in `run1/`. It had to be read
+from the hub's eight identical holes, known only modulo 225 rpm, and came out
+about 5 % low. The motor's pitch on its soundtrack, taken as rotor speed and
+divided by the 48:1 gearing, was within 2 % of the slow-motion figures from
+0.25 up, which also confirms the gear ratio. The soundtrack puts the PWM at
+about 1560 Hz rather than the 1526 Hz the chip's arithmetic gives: its
+oscillator runs about 2 % fast, within tolerance.
 
 ## Experiment 4: stall
 
@@ -214,14 +223,16 @@ tripping; the logs cannot distinguish them. It has not recurred.
 | `board` | drv8870 (a guess) | tb6612 | driver-chip test |
 | `r_5v_path` | absent | 0.49 ohm | load step |
 | `cell_r0` | 0.060 assumed | 0.0575 | load step, charged |
-| `motor_v_rated`, `motor_rpm_noload` | 6 V, 240 rpm assumed | confirmed | wheels-up sweep |
-| `motor_i_noload` | 0.16 A | 0.237 A | wheels-up sweep |
+| `motor_v_rated` | 6 V assumed | confirmed | wheels-up sweep |
+| `motor_rpm_noload` | 240 rpm | 255 rpm | wheels-up sweep |
+| `motor_i_noload` | 0.16 A | 0.197 A | wheels-up sweep |
+| `motor_coulomb_fraction` | 0.7 | 0.56 | wheels-up sweep |
 | `motor_r` | 4.0 ohm | 3.45 ohm | stall |
 | `jetson_p_idle` | 2.5 W | 1.15 W | rest |
 
 ## Still to do
 
 The floor tests (`straight`, `spin`, `step_response`) and the held-out
-`square`. A slow-motion retake of the wheels-up sweep with tape on the tyre.
-And the hand measurements: the robot's mass, the wheel's diameter, the cells'
+`square`. Extra holds near full command, to look at the bend. And the hand
+measurements: the robot's mass, the wheel's diameter, the cells'
 label.

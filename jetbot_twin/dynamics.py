@@ -91,10 +91,13 @@ class DiffDrive:
                                    slip_l=0.0, slip_r=0.0)
                 continue
             if self.lifted:
-                s.wl, _ = friction_step(s.wl, tau_l, self.Jw, h, hw.motor_tau_coulomb,
-                                        hw.motor_tau_static, hw.motor_viscous)
-                s.wr, _ = friction_step(s.wr, tau_r, self.Jw, h, hw.motor_tau_coulomb,
-                                        hw.motor_tau_static, hw.motor_viscous)
+                c2 = hw.motor_drag2
+                s.wl, _ = friction_step(s.wl, tau_l - c2 * s.wl * abs(s.wl), self.Jw, h,
+                                        hw.motor_tau_coulomb, hw.motor_tau_static,
+                                        hw.motor_viscous)
+                s.wr, _ = friction_step(s.wr, tau_r - c2 * s.wr * abs(s.wr), self.Jw, h,
+                                        hw.motor_tau_coulomb, hw.motor_tau_static,
+                                        hw.motor_viscous)
                 s.phi_l += s.wl * h
                 s.phi_r += s.wr * h
                 self.forces = dict(Fl=0.0, Fr=0.0, Nl=0.0, Nr=0.0, Nc=0.0,
@@ -109,12 +112,13 @@ class DiffDrive:
             # rolling resistance acts on the wheel as a torque
             rr_l = hw.c_rr * Nl * r
             rr_r = hw.c_rr * Nr * r
+            c2 = hw.motor_drag2
             s.wl, _ = friction_step(
-                s.wl, tau_l - r * Fl, self.Jw, h,
+                s.wl, tau_l - r * Fl - c2 * s.wl * abs(s.wl), self.Jw, h,
                 hw.motor_tau_coulomb + rr_l, hw.motor_tau_static + rr_l,
                 hw.motor_viscous)
             s.wr, _ = friction_step(
-                s.wr, tau_r - r * Fr, self.Jw, h,
+                s.wr, tau_r - r * Fr - c2 * s.wr * abs(s.wr), self.Jw, h,
                 hw.motor_tau_coulomb + rr_r, hw.motor_tau_static + rr_r,
                 hw.motor_viscous)
             # caster: a ball that drags, at xc on the centreline
