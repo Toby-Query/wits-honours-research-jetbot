@@ -23,12 +23,12 @@ drift_m = -0.25          # to the robot's RIGHT, "more than 25 cm"
 # video (tape_on/straight.csv): 1.43 m, 5-10 cm to the left, about 10 degrees.
 
 [spin]
-# TAPE ON the left tyre for this one (tape_on/).
-# -0.4 / +0.4 for 2 s, on one tile clear of the joints, pack at 11.77 V.
-# From the top-down slow-motion video (spin_slowmo.mp4, 240.3 fps) by
-# tools/spin_video.py: see spin_video.json. Counter-clockwise from above.
-rotation_deg = 1033.0
-wander_m = 0.01
+# -0.4 / +0.4 for 2 s on one tile, pack at 11.94 V, NO TAPE. From the top-down
+# video (spin_no_tape.mp4, 30 fps) by tools/spin_video.py: see
+# spin_no_tape_video.json. Counter-clockwise from above.
+rotation_deg = 1037.0
+wander_m = 0.03
+# With the tape on the left tyre (tape_on/spin.csv, spin_slowmo.mp4): 1033.
 
 [short_turns]
 # TAPE ON the left tyre for this one (tape_on/).

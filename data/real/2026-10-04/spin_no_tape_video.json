@@ -1,0 +1,12 @@
+{
+ "video": "data/real/2026-10-04/spin_no_tape.mp4",
+ "true_fps": 30.007604183664785,
+ "rotation_deg": 1036.8112310642175,
+ "turns": 2.880031197400604,
+ "direction": "counter-clockwise",
+ "steady_rate_deg_s": 528.5491827657555,
+ "moving_for_s": 2.03281806926814,
+ "heading_scatter_at_rest_deg": 0.33291262003658373,
+ "frames_without_a_reading": 0,
+ "ended_this_far_from_start_m": 0.02804703602718331
+}
