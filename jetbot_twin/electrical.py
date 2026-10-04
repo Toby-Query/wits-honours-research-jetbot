@@ -135,7 +135,12 @@ def build(hw: Hardware = None, fidelity="average", standalone=True, **overrides)
         "jetson", power=hw.jetson_p_idle, v_min=hw.jetson_v_min,
         v_max=hw.jetson_v_max, i_header_max=hw.jetson_i_header_max,
         note="Header1: 5V on two pins, 3V3 back out"))
-    c.connect("5V", jetson.v5)
+    path = c.add(Resistor(
+        "header", r=max(hw.r_5v_path, 1e-4),
+        note="5 V path from the regulator to where the Jetson measures it: "
+             "header pins, carrier traces, input switch"))
+    c.connect("5V", path.a)
+    c.connect("5V_JETSON", path.b, jetson.v5)
     c.connect("3V3", jetson.v3v3)
     c.ground(jetson.gnd)
 

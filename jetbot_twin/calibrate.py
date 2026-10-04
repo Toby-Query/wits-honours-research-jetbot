@@ -34,13 +34,15 @@ from .compare import replay, sags
 from .experiments import EXPERIMENTS, MANUAL_TOL, predict_manual
 
 STAGES = [
+    ("rail", ["r_5v_path"], ["jetson_load"]),
     ("pack", ["cell_r0"], ["jetson_load"]),
     ("free", ["motor_rpm_noload", "motor_i_noload"], ["wheels_up_sweep"]),
     ("stall", ["motor_r"], ["stall"]),
     ("floor", ["gear_eff", "mu_caster"], ["straight", "spin"]),
 ]
 # How far a fit may move each number from where it started, as a ratio.
-BOUNDS = {"gear_eff": (0.5, 1.45), "motor_l": (0.3, 3.0)}
+BOUNDS = {"gear_eff": (0.5, 1.45), "motor_l": (0.3, 3.0), "r_5v_path": (0.05, 10.0),
+          "cell_r0": (0.3, 5.0)}
 DEFAULT_BOUNDS = (0.4, 2.5)
 BUS_NOISE = 0.010          # V: what one INA219 bus reading is good to
 
@@ -52,7 +54,7 @@ class Case:
     manual: dict = field(default_factory=dict)
 
 
-def residuals(hw, cases, dt=None):
+def residuals(hw, cases, dt=None, only=None):
     """Everything the twin gets wrong, each in units of its own uncertainty."""
     out = []
     for case in cases:
@@ -68,6 +70,16 @@ def residuals(hw, cases, dt=None):
                             - log.mean("bus_v", t0 + 2, t1 - 0.2))
                     out.append(sign * step / (BUS_NOISE / 4))
                 out[-2:] = [out[-2] + out[-1]]
+        if (only == "rail" and case.real is not None and "v_5v" in case.real
+                and np.isfinite(case.real["v_5v"]).any()):
+            # the 5 V the Jetson sees, idle and loaded
+            t0 = case.exp.profile[0][0]
+            t1 = t0 + case.exp.profile[1][0]
+            out = []
+            for a, b in ((1.0, t0 - 0.5), (t0 + 2.0, t1 - 0.5)):
+                out.append((twin_log.mean("v_5v", a, b)
+                            - case.real.mean("v_5v", a, b)) / 0.005)
+            return np.array(out, float)
         pred = predict_manual(case.exp, twin_log)
         for k, v in case.manual.items():
             if k not in pred:
@@ -80,7 +92,7 @@ def residuals(hw, cases, dt=None):
     return np.array(out, float)
 
 
-def fit(hw, names, cases, dt=None, verbose=False):
+def fit(hw, names, cases, dt=None, verbose=False, only=None):
     """Least-squares fit of the named Hardware fields. Returns (hw, info)."""
     from scipy.optimize import least_squares
     x0 = np.ones(len(names))
@@ -90,7 +102,7 @@ def fit(hw, names, cases, dt=None, verbose=False):
         return hw.with_(**{n: v * s for n, v, s in zip(names, nominal, x)})
 
     def f(x):
-        r = residuals(make(x), cases, dt)
+        r = residuals(make(x), cases, dt, only)
         if verbose:
             print("   ", " ".join(f"{n}={v * s:.4g}" for n, v, s in
                                   zip(names, nominal, x)),
@@ -125,7 +137,10 @@ def staged(hw, data, board=None, verbose=True, dt=None):
         if not cases:
             say(f"{stage}: no data for {', '.join(exps)}; skipped")
             return hw, None
-        hw, info = fit(hw, names, cases, dt=dt)
+        if stage == "rail":
+            # starts at zero, so there is nothing to scale: begin from a guess
+            hw = hw.with_(r_5v_path=hw.r_5v_path or 0.2)
+        hw, info = fit(hw, names, cases, dt=dt, only=stage)
         info["stage"] = stage
         say(f"{stage}: misfit {info['cost_before']:.1f} -> "
             f"{info['cost_after']:.1f} over {info['n_residuals']} numbers")
@@ -135,15 +150,16 @@ def staged(hw, data, board=None, verbose=True, dt=None):
             say(f"    {n:<20} {a:.4g} -> {b:.4g}{flag}")
         return hw, info
 
-    hw, info = run_stage(hw, *stages[0])                 # pack
-    if info:
-        history.append(info)
+    for st in stages[:2]:                                # rail, then pack
+        hw, info = run_stage(hw, *st)
+        if info:
+            history.append(info)
 
     if board is None and "wheels_up_sweep" in data:
         trial = {}
         for b in ("drv8870", "tb6612"):
             say(f"-- supposing the driver is the {b}")
-            trial[b] = run_stage(hw.with_(board=b), *stages[1])
+            trial[b] = run_stage(hw.with_(board=b), *stages[2])
         board = min(trial, key=lambda b: trial[b][1]["cost_after"])
         cost = {b: trial[b][1]["cost_after"] for b in trial}
         other = max(cost, key=cost.get)
@@ -157,11 +173,11 @@ def staged(hw, data, board=None, verbose=True, dt=None):
     else:
         if board is not None:
             hw = hw.with_(board=board)
-        hw, info = run_stage(hw, *stages[1])
+        hw, info = run_stage(hw, *stages[2])
         if info:
             history.append(info)
 
-    for st in stages[2:]:
+    for st in stages[3:]:
         hw, info = run_stage(hw, *st)
         if info:
             history.append(info)

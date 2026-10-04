@@ -46,12 +46,61 @@ HAT = {"left": dict(pwm=8, in2=9, in1=10), "right": dict(pwm=13, in2=12, in1=11)
 DRV = {"left": dict(in1=1, in2=0), "right": dict(in1=2, in2=3)}
 
 
+class RawBus(object):
+    """The few SMBus calls this file uses, straight on /dev/i2c-N.
+
+    The stock JetBot image keeps its Python I2C libraries inside a Docker
+    container; the host has none. The device node is all that is needed.
+    Words are little-endian, as SMBus has them.
+    """
+    I2C_SLAVE = 0x0703
+
+    def __init__(self, n):
+        import fcntl
+        self._ioctl = fcntl.ioctl
+        self.fd = os.open("/dev/i2c-%d" % n, os.O_RDWR)
+        self._addr = None
+
+    def _to(self, addr):
+        if addr != self._addr:
+            self._ioctl(self.fd, self.I2C_SLAVE, addr)
+            self._addr = addr
+
+    def read_byte(self, addr):
+        self._to(addr)
+        return os.read(self.fd, 1)[0]
+
+    def read_byte_data(self, addr, reg):
+        self._to(addr)
+        os.write(self.fd, bytes(bytearray([reg])))
+        return bytearray(os.read(self.fd, 1))[0]
+
+    def write_byte_data(self, addr, reg, value):
+        self._to(addr)
+        os.write(self.fd, bytes(bytearray([reg, value & 0xFF])))
+
+    def write_i2c_block_data(self, addr, reg, values):
+        self._to(addr)
+        os.write(self.fd, bytes(bytearray([reg] + [v & 0xFF for v in values])))
+
+    def read_word_data(self, addr, reg):
+        self._to(addr)
+        os.write(self.fd, bytes(bytearray([reg])))
+        b = bytearray(os.read(self.fd, 2))
+        return b[0] | (b[1] << 8)
+
+    def write_word_data(self, addr, reg, value):
+        self._to(addr)
+        os.write(self.fd, bytes(bytearray([reg, value & 0xFF, (value >> 8) & 0xFF])))
+
+
 def open_bus():
-    try:
-        import smbus
-    except ImportError:
-        import smbus2 as smbus
-    return smbus.SMBus(BUS)
+    for name in ("smbus", "smbus2"):
+        try:
+            return __import__(name).SMBus(BUS)
+        except ImportError:
+            pass
+    return RawBus(BUS)
 
 
 # --------------------------------------------------------------------- PCA9685
@@ -131,9 +180,17 @@ class Ina219(object):
         # 32 V range, PGA /8 (+/-320 mV), 12-bit, continuous
         bus.write_word_data(addr, 0x00, _swap(0x399F))
 
+    last = None
+
     def read(self):
-        raw = _swap(self.bus.read_word_data(self.addr, 0x02))
-        bus_v = (raw >> 3) * 0.004
+        # Now and then a read comes back as nonsense (4.096 V on a 10 V
+        # rail). A real rail does not move a volt in 20 ms: read it again.
+        for _ in range(3):
+            raw = _swap(self.bus.read_word_data(self.addr, 0x02))
+            bus_v = (raw >> 3) * 0.004
+            if self.last is None or abs(bus_v - self.last) < 1.0:
+                break
+        self.last = bus_v
         sh = _swap(self.bus.read_word_data(self.addr, 0x01))
         if sh > 32767:
             sh -= 65536
@@ -182,11 +239,19 @@ class Rails(object):
         except (IOError, ValueError):
             return float("nan")
 
+    def _rail(self, name):
+        f = self.files[name]
+        v, i = self._read(f["v"]), self._read(f["i"])
+        return (v, i, v * i)
+
+    def read_one(self, name):
+        return {name: self._rail(name)} if name in self.files else {}
+
+    def read_others(self, skip):
+        return {n: self._rail(n) for n in self.files if n != skip}
+
     def read(self):
-        out = {}
-        for name, f in self.files.items():
-            out[name] = (self._read(f["v"]), self._read(f["i"]), self._read(f["p"]))
-        return out
+        return {n: self._rail(n) for n in self.files}
 
 
 def thermal():
@@ -273,7 +338,10 @@ def probe():
             info["pca_prescale"] = bus.read_byte_data(PCA_ADDR, 0xFE)
             info["pca_mode1"] = bus.read_byte_data(PCA_ADDR, 0x00)
         if INA_ADDR in addrs:
-            v, i = Ina219(bus).read()
+            ina = Ina219.__new__(Ina219)            # read only: do not configure
+            ina.bus, ina.addr, ina.r = bus, INA_ADDR, 0.1
+            info["ina_config"] = "0x%04x" % _swap(bus.read_word_data(INA_ADDR, 0x00))
+            v, i = ina.read()
             info["bus_v"], info["charge_i"] = v, i
         if ADS_ADDR in addrs:
             a = Ads1115(bus)
@@ -321,6 +389,8 @@ def run(exp, out_path, countdown):
     if ads:
         cols += ["ads0", "ads1", "ads2", "ads3"]
     rows = []
+    slow_every = max(1, int(round(hz / 5.0)))
+    r, th, load = {}, {}, 0.0
     try:
         t0 = time.time()
         t_seg = 0.0
@@ -344,8 +414,16 @@ def run(exp, out_path, countdown):
                 if now >= t_seg:
                     break
                 bv, ci = ina.read() if ina else (float("nan"), float("nan"))
-                r = rails.read()
-                th = thermal()
+                # The Jetson's own monitor takes ~30 ms per value and the
+                # thermal zones are slower still: read them a few times a
+                # second and hold, so the bus voltage keeps its full rate.
+                n = len(rows)
+                if n % slow_every == 0:
+                    r = rails.read_one("POM_5V_IN")
+                if n % (5 * slow_every) == 0:
+                    r.update(rails.read_others("POM_5V_IN"))
+                    th = thermal()
+                    load = cpu.read()
 
                 def rail(name, j):
                     return r[name][j] if name in r else float("nan")
@@ -353,7 +431,7 @@ def run(exp, out_path, countdown):
                        rail("POM_5V_IN", 0), rail("POM_5V_IN", 1), rail("POM_5V_IN", 2),
                        rail("POM_5V_GPU", 2), rail("POM_5V_CPU", 2),
                        th.get("CPU-therm", float("nan")),
-                       th.get("GPU-therm", float("nan")), cpu.read()]
+                       th.get("GPU-therm", float("nan")), load]
                 if ads:
                     row += [ads.read(j) for j in range(4)]
                 rows.append(row)

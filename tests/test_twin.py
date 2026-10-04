@@ -188,7 +188,8 @@ def test_calibration_recovers_a_known_pack_resistance():
     exp = EXPERIMENTS["jetson_load"]
     real, manual = synthetic.observe(exp)
     assert real.meta["source"] == "synthetic"
-    _, info = calibrate.fit(DEFAULT, ["cell_r0"], [calibrate.Case(exp, real, manual)])
+    start = DEFAULT.with_(r_5v_path=synthetic.TRUTH["r_5v_path"])
+    _, info = calibrate.fit(start, ["cell_r0"], [calibrate.Case(exp, real, manual)])
     assert info["after"][0] == pytest.approx(synthetic.TRUTH["cell_r0"], rel=0.05)
     assert info["cost_after"] < 0.05 * info["cost_before"]
 

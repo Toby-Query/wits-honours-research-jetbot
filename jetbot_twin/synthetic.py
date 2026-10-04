@@ -19,6 +19,7 @@ TRUTH = dict(
     motor_rpm_noload=205.0, motor_i_noload=0.21, motor_r=5.1,
     cell_r0=0.085, wheel_radius=0.0333, gear_eff=0.55, mu_caster=0.36,
     jetson_p_idle=3.1, jetson_p_max=8.4, mass_override=0.78, soc0=0.83,
+    r_5v_path=0.3,
 )
 
 
@@ -39,6 +40,7 @@ def observe(exp, hw=None, seed=0):
         "bus_v": np.round((full["bus_v"] + rng.normal(0, 0.006, n)) / 0.004) * 0.004,
         "charge_i": full["charge_i"] + rng.normal(0, 0.001, n),
         "p_5v": full["p_5v"] * (1 + rng.normal(0, 0.02, n)),
+        "v_5v": full["v_5v"] + rng.normal(0, 0.004, n),
     }
     log = Log(cols, {"experiment": exp.name, "source": "synthetic"})
     manual = {}

@@ -72,9 +72,9 @@ class Robot:
 
 # Columns every log has, real or simulated. The first block is what the real
 # robot can measure about itself; the second is what only the twin knows.
-OBSERVABLE = ["t", "cmd_l", "cmd_r", "bus_v", "charge_i", "p_5v"]
+OBSERVABLE = ["t", "cmd_l", "cmd_r", "bus_v", "charge_i", "p_5v", "v_5v"]
 TRUTH = ["x", "y", "th", "v", "w", "wl", "wr", "phi_l", "phi_r", "i_l", "i_r", "i_pack",
-         "v_12", "v_5", "soc", "slip_l", "slip_r", "t_drv", "t_buck"]
+         "v_12", "soc", "slip_l", "slip_r", "t_drv", "t_buck"]
 
 
 class JetBotTwin:
@@ -146,7 +146,7 @@ class JetBotTwin:
             "i_r": float(self._dr.sig.get("i", 0.0)),
             "i_pack": float(c["protector"].sig["i"]),
             "v_12": float(c["U3"].sig["v_in"]),
-            "v_5": float(self.jetson.sig["v"]),
+            "v_5v": float(self.jetson.sig["v"]),
             "soc": float(c["cell1"].sig["soc"]),
             "slip_l": f.get("slip_l", 0.0), "slip_r": f.get("slip_r", 0.0),
             "t_drv": float(self._dl.sig.get("T", self.hw.ambient)),

@@ -179,6 +179,11 @@ class Hardware:
     buck_f_sw: float = datasheet(340e3, "APW7313")
     buck_v_in_max: float = datasheet(24.0, "APW7313")
     buck_rth: float = assumed(60.0, "SOP-8P on this board, C/W")
+    # Everything between the regulator's output and the point where the
+    # Jetson measures its own supply: header pins, carrier traces, the
+    # carrier's input switch. The schematic shows none of it, and the twin
+    # was built without it. See docs/RESULTS.md.
+    r_5v_path: float = assumed(0.0, "not on the schematic; zero until measured")
 
     # ------------------------------------------------------------------ Jetson
     jetson_v_min: float = datasheet(4.75, "Jetson Nano dev kit: 5 V +/- 5 %")

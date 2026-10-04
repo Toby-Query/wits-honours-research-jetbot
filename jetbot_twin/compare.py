@@ -70,12 +70,19 @@ class Comparison:
     bus_bias: float = math.nan            # V, twin minus robot
     sag_real: list = field(default_factory=list)   # V, per driven segment
     sag_twin: list = field(default_factory=list)
+    v5_rmse: float = math.nan             # V, at the Jetson
+    v5_min_real: float = math.nan
+    v5_min_twin: float = math.nan
     manual: dict = field(default_factory=dict)     # key -> (real, twin, tol)
     soc: float = math.nan
 
     def rows(self):
         out = [("bus voltage RMSE", f"{self.bus_rmse * 1e3:.0f} mV"),
                ("bus voltage bias (twin - robot)", f"{self.bus_bias * 1e3:+.0f} mV")]
+        if math.isfinite(self.v5_rmse):
+            out.append(("5 V at the Jetson, RMSE", f"{self.v5_rmse * 1e3:.0f} mV"))
+            out.append(("5 V at the Jetson, lowest",
+                        f"robot {self.v5_min_real:.3f} V, twin {self.v5_min_twin:.3f} V"))
         for k, (a, b) in enumerate(zip(self.sag_real, self.sag_twin)):
             out.append((f"sag in segment {k + 1}",
                         f"robot {a * 1e3:.0f} mV, twin {b * 1e3:.0f} mV"))
@@ -115,6 +122,12 @@ def compare(exp, real: Log, twin_log: Log, manual=None, soc=math.nan):
         c.bus_rmse = float(np.sqrt(np.mean(d ** 2)))
         c.bus_bias = float(np.mean(d))
         c.sag_real, c.sag_twin = sags(exp, real), sags(exp, twin_log)
+    if "v_5v" in real and np.isfinite(real["v_5v"]).any():
+        tw = np.interp(real.t, twin_log.t, twin_log["v_5v"])
+        d = (tw - real["v_5v"])[np.isfinite(real["v_5v"])]
+        c.v5_rmse = float(np.sqrt(np.mean(d ** 2)))
+        c.v5_min_real = float(np.nanpercentile(real["v_5v"], 1))
+        c.v5_min_twin = float(np.percentile(twin_log["v_5v"], 1))
     pred = predict_manual(exp, twin_log)
     for k, v in (manual or {}).items():
         if k in pred:

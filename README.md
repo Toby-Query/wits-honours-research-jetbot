@@ -21,7 +21,7 @@ web/            the live 3D view
 | JetBot circuit | transcribed from Waveshare's schematic |
 | JetBot geometry | Waveshare's own CAD, measured and converted |
 | Dynamics | working |
-| **Compared with the real robot** | **not yet.** Predictions are recorded; the procedure is rehearsed on a stand-in |
+| **Compared with the real robot** | **started 2026-10-04: the two stationary tests only.** See [docs/RESULTS.md](docs/RESULTS.md). Motors and motion are still untested |
 
 The twin rests on about 55 numbers nobody has measured on this robot yet, most
 importantly what the motors are. `python -m jetbot_twin assumptions` lists

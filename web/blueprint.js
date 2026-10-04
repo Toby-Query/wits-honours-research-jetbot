@@ -35,7 +35,7 @@ const sig4 = (v) => (v === 0 ? '0' : String(+Number(v).toPrecision(4)));
 const COLUMNS = [
   ['cell3', 'cell2', 'cell1', 'holder'],
   ['protector', 'R15', 'charger', 'R16', 'ina219'],
-  ['S1', 'C_bulk', 'U3', 'C_5V'],
+  ['S1', 'C_bulk', 'U3', 'C_5V', 'header'],
   ['jetson', 'pca9685', 'oled'],
   ['drive_left', 'drive_right', 'bridge_left', 'motor_left', 'bridge_right', 'motor_right'],
 ];
