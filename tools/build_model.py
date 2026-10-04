@@ -157,8 +157,9 @@ def tessellated():
 # --------------------------------------------------------------------------
 # The camera mount. Waveshare's CAD has a fixed bracket; the kit as shipped
 # (and as photographed on this robot, 2026-10-04) has a HINGED one: a folded
-# upright standing on the front edge of the chassis, wholly ahead of both
-# circuit boards; a pivot screw; a small tilting bracket; a yellow-green
+# single flat sheet standing on edge at the front of the chassis, facing
+# forward and wholly ahead of both circuit boards, whose two edges fold
+# forward at the top into arms; a pivot screw through those arms; a small tilting bracket; a yellow-green
 # spacer; and the camera on that, overhanging the front of the robot. The CAD bracket is dropped and this one built in its
 # place. Its proportions are taken from the photograph against the 25 mm
 # camera board, not from a drawing: it is a likeness, not a measurement.
@@ -262,43 +263,83 @@ def barrel(radius, length, centre):
 # ends at x = 44.8 mm and both circuit boards end at x = 35.2 mm. The upright
 # stands in the 9 mm between those, so it clears the boards entirely.
 CHASSIS_TOP, CHASSIS_FRONT, BOARDS_FRONT = 0.0529, 0.0448, 0.0352
-PIVOT = (0.0410, 0.0970)             # the hinge screw
-BOARD_AT = (0.0515, 0.1000)          # centre of the camera board, mount level
-WIDTH = 0.024                        # of the upright, across the robot
+SHEET = 0.002                        # the upright is one flat sheet this thick
+SHEET_X = 0.0415                     # its rear face. Waveshare's own two mount
+                                     # screws are at x = 36 mm: the foot they
+                                     # hold is BEHIND the sheet, so the sheet
+                                     # stands ahead of them, near the chassis front
+FOOT_BACK = 0.0325                   # how far back the foot reaches, under the screws
+PIVOT = (0.0480, 0.1080)             # the hinge screw, out on the arms
+ARM_R = 0.0042                       # the arms are short rounded tabs this big
+PLATE_GAP = 0.0060                   # pivot to the back of the tilting plate
+BOARD_AT = (PIVOT[0] + PLATE_GAP + 0.002 + 0.003 + 0.0005, PIVOT[1] + 0.003)
+WIDTH = 0.024                        # of the sheet, across the robot
+FOOT_WIDTH = 0.038                   # the base is wider, to take the screws
+
+
+def tilting_parts(pitch):
+    """What turns with the camera: {colour: [(vertices, faces), ...]}."""
+    px, py = PIVOT
+    tilt = {SPACER: [], GREEN: []}
+    plate_x = px + PLATE_GAP + 0.001
+    tilt[GREEN].append(box((0.002, 0.027, 0.027), (plate_x, BOARD_AT[1], 0.0)))
+    tilt[SPACER].append(box((0.003, 0.027, 0.027), (plate_x + 0.0025, BOARD_AT[1], 0.0)))
+    for z in (-WIDTH / 2 + 0.0030, WIDTH / 2 - 0.0030):     # ears, inside the arms
+        tilt[GREEN].append(box((PLATE_GAP, 2 * ARM_R, 0.0015), (px + PLATE_GAP / 2, py, z)))
+        tilt[GREEN].append(barrel(ARM_R, 0.0015, (px, py, z)))
+    return {c: [(rot_z(v, PIVOT, pitch), f) for v, f in lst] for c, lst in tilt.items()}
 
 
 def hinged_mount(pitch):
-    """The mount, as {colour: [(vertices, faces), ...]}."""
+    """The mount, as ({colour: [(vertices, faces), ...]}, fixed boxes)."""
     px, py = PIVOT
     out = {SPACER: [], GREEN: [], BLACK: []}
-    # --- fixed: a channel folded from sheet, web to the front, open to the rear
-    top = py + 0.003
+    # --- fixed: ONE FLAT SHEET, standing on edge and facing forward. From the
+    #     side it is a line. At the bottom it bends BACK into a foot that
+    #     rests on the chassis, with the two screws through that foot, behind
+    #     the sheet. At the top its two edges fold FORWARD into short rounded
+    #     arms, and the pivot screw goes through those.
+    top = py + ARM_R
     h = top - CHASSIS_TOP
-    web_x = CHASSIS_FRONT - 0.0012
-    back_x = BOARDS_FRONT + 0.0012                 # the flanges stop short of the boards
-    depth = web_x - back_x
-    out[GREEN].append(box((0.0015, h, WIDTH), (web_x, CHASSIS_TOP + h / 2, 0.0)))
-    for z in (-WIDTH / 2, WIDTH / 2):
-        out[GREEN].append(box((depth, h - 0.004, 0.0015),
-                              (back_x + depth / 2, CHASSIS_TOP + (h - 0.004) / 2, z)))
-        out[GREEN].append(barrel(0.0055, 0.0015, (px, py, z)))       # rounded ear
-        out[BLACK].append(barrel(0.0027, 0.0022, (px, py, z + np.sign(z) * 0.0030)))
-    out[GREEN].append(box((depth, 0.0015, WIDTH), (back_x + depth / 2, CHASSIS_TOP + 0.0008, 0.0)))
-    # --- tilting: a small bracket whose ears sit outside the upright's,
-    #     a plate across its front, the spacer, then the camera board
-    tilt = {SPACER: [], GREEN: []}
-    plate_x = BOARD_AT[0] - 0.0005 - 0.003 - 0.001
-    tilt[GREEN].append(box((0.002, 0.027, 0.027), (plate_x, BOARD_AT[1], 0.0)))
-    tilt[SPACER].append(box((0.003, 0.027, 0.027), (plate_x + 0.0025, BOARD_AT[1], 0.0)))
-    for z in (-WIDTH / 2 - 0.0016, WIDTH / 2 + 0.0016):
-        reach = plate_x - px
-        tilt[GREEN].append(box((reach + 0.004, 0.010, 0.0015), (px + reach / 2, py, z)))
-    for colour, lst in tilt.items():
-        out[colour] += [(rot_z(v, PIVOT, pitch), f) for v, f in lst]
-    return out
+    out[GREEN].append(box((SHEET, h, WIDTH), (SHEET_X + SHEET / 2, CHASSIS_TOP + h / 2, 0.0)))
+    out[GREEN].append(box((SHEET_X + SHEET - FOOT_BACK, 0.0015, FOOT_WIDTH),
+                          ((FOOT_BACK + SHEET_X + SHEET) / 2, CHASSIS_TOP + 0.00075, 0.0)))
+    reach = px - (SHEET_X + SHEET)
+    for z in (-WIDTH / 2 + 0.00075, WIDTH / 2 - 0.00075):
+        out[GREEN].append(box((reach, 2 * ARM_R, 0.0015), (SHEET_X + SHEET + reach / 2, py, z)))
+        out[GREEN].append(barrel(ARM_R, 0.0015, (px, py, z)))        # the rounded end
+        out[BLACK].append(barrel(0.0026, 0.0022, (px, py, z + np.sign(z) * 0.0018)))
+    fixed = [v for v, f in out[GREEN] if len(v) == 8]
+    for colour, lst in tilting_parts(pitch).items():
+        out[colour] += lst
+    return out, fixed
 
 
-def check(parts, mount, cable, cam_end, place_camera):
+def box_samples(corners, n=5):
+    """A grid of points through a box given by its eight corners."""
+    o = corners[0]
+    e = [corners[k] - o for k in (1, 2, 4)]
+    g = np.linspace(0.0, 1.0, n)
+    return np.array([o + a * e[0] + b * e[1] + c * e[2] for a in g for b in g for c in g])
+
+
+def tilt_range(fixed, place_at, cam_points):
+    """Through what angles can the camera turn before it touches the mount?"""
+    def clear(pitch):
+        pts = [box_samples(v) for lst in tilting_parts(pitch).values()
+               for v, f in lst if len(v) == 8]
+        pts.append(place_at(cam_points, pitch))
+        pts = np.vstack(pts)
+        return not any(inside_box(pts, b, 0.0002).any() for b in fixed)
+    lo = hi = 0
+    while lo > -90 and clear(lo - 5):
+        lo -= 5
+    while hi < 90 and clear(hi + 5):
+        hi += 5
+    return clear(0), lo, hi
+
+
+def check(parts, mount, fixed, cable, cam_end, place_camera, cam_cad):
     """Does the hand-built geometry fit the CAD it was added to?
 
     Waveshare's solids are taken as fitting each other. Everything added or
@@ -331,16 +372,31 @@ def check(parts, mount, cable, cam_end, place_camera):
             hits.append(f"{node} ({n} points)")
     report(not hits, "the mount passes through no other part", ", ".join(hits))
 
-    fixed = [b for b in boxes if b[:, 0].max() <= CHASSIS_FRONT + 1e-6]
     cam = np.vstack([np.vstack(vs) for c, (vs, _) in parts["camera"]["by_colour"].items()
                      if c != "#d8d4c4"])
     screws = np.abs(np.abs(cam[:, 2]) - 0.0105) < 0.0025        # the four M1.6
     n = sum(int(inside_box(cam[~screws], b).sum()) for b in fixed)
     report(n == 0, "the camera clears the upright at this tilt", f"{n} points inside" if n else "")
 
+    ok0, t_lo, t_hi = tilt_range(fixed, place_camera, cam_cad)
+    report(ok0 and t_lo <= -20 and t_hi >= 20,
+           "the camera can tilt at least 20 degrees each way on its hinge",
+           f"it turns freely from {t_lo:+d} to {t_hi:+d} degrees")
+    arm = max((b[:, 1].max() - b[:, 1].min()) for b in fixed[2:])
+    report(arm <= 0.010, "the arms are short tabs, not tall slabs", f"{arm * 1e3:.1f} mm tall")
+    behind = [np.vstack(vs) for c, (vs, _) in parts["camera_mount"]["by_colour"].items()
+              if c == "#9aa0a6"]
+    report(bool(behind) and behind[0][:, 0].max() < SHEET_X + 1e-4,
+           "the foot's screws are behind the sheet",
+           f"screws reach x = {behind[0][:, 0].max() * 1e3:.1f} mm, sheet's rear face is at "
+           f"{SHEET_X * 1e3:.1f} mm" if behind else "no mount screws found")
     lo = min(b[:, 0].min() for b in boxes)
-    report(lo > BOARDS_FRONT, "the upright is wholly ahead of the circuit boards",
-           f"rearmost point {lo * 1e3:.1f} mm, boards end at {BOARDS_FRONT * 1e3:.1f} mm")
+    thick = fixed[0][:, 0].max() - fixed[0][:, 0].min()
+    report(thick <= 0.0025, "the upright is a thin sheet, edge-on from the side",
+           f"{thick * 1e3:.1f} mm thick")
+    sheet_lo = fixed[0][:, 0].min()
+    report(sheet_lo > BOARDS_FRONT, "the upright is wholly ahead of the circuit boards",
+           f"its rear face is at {sheet_lo * 1e3:.1f} mm, boards end at {BOARDS_FRONT * 1e3:.1f} mm")
     foot = min(b[:, 1].min() for b in boxes)
     report(abs(foot - CHASSIS_TOP) < 0.0005, "the mount stands on the chassis",
            f"its foot is {(foot - CHASSIS_TOP) * 1e3:+.2f} mm from the chassis top")
@@ -365,7 +421,10 @@ def check(parts, mount, cable, cam_end, place_camera):
            f"furthest is {far * 1e3:.1f} mm from the board's centre")
     ms = [np.vstack(vs) for c, (vs, _) in parts["camera_mount"]["by_colour"].items()
           if c == "#9aa0a6"]
-    ok = bool(ms) and BOARDS_FRONT < ms[0][:, 0].min() and ms[0][:, 0].max() < CHASSIS_FRONT
+    foot = fixed[1]
+    ok = (bool(ms) and foot[:, 0].min() <= ms[0][:, 0].min() + 1e-4
+          and ms[0][:, 0].max() <= foot[:, 0].max() + 1e-4
+          and np.abs(ms[0][:, 2]).max() <= foot[:, 2].max() + 1e-4)
     report(ok, "the mount's screws go through its foot",
            "" if ms else "no mount screws found")
 
@@ -378,13 +437,16 @@ def main():
     parts = {}                     # node name -> dict(meshes by colour, meta)
     all_leaves = tessellated()
     cam_c, cam_n, cad_pitch, lens_c = camera_frame(all_leaves)
-    mount = hinged_mount(CAM_PITCH_DEG)
+    mount, fixed = hinged_mount(CAM_PITCH_DEG)
 
-    def place_camera(g):
+    def place_camera(g, pitch=CAM_PITCH_DEG):
         """CAD camera -> level, onto the spacer, then tilted about the hinge."""
         g = rot_z(g, cam_c[:2], -cad_pitch)
         g = g + np.array([BOARD_AT[0] - cam_c[0], BOARD_AT[1] - cam_c[1], 0.0])
-        return rot_z(g, PIVOT, CAM_PITCH_DEG)
+        return rot_z(g, PIVOT, pitch)
+
+    cam_cad = np.vstack([to_gltf(np.asarray(v, float)) for path, v, _ in all_leaves
+                         if "Raspberry_Pi_Camera" in " ".join(path)])
     foot_x = (BOARDS_FRONT + CHASSIS_FRONT) / 2
     for path, v, f in all_leaves:
         v, f = np.asarray(v, float), np.asarray(f, int)
@@ -400,8 +462,9 @@ def main():
             c0 = (g0.min(0) + g0.max(0)) / 2
             if 0.030 < c0[0] < 0.042 and 0.050 < c0[1] < 0.056 and abs(c0[2]) < 0.016:
                 # the two that held the CAD's bracket: now through the new foot
+                # the two that hold the mount's foot. They stay exactly where
+                # Waveshare's CAD has them; the foot is built under them.
                 group, name = "camera_mount", "Mount screws"
-                shift = np.array([foot_x - c0[0], 0.0, np.sign(c0[2]) * 0.007 - c0[2]])
         side = ""
         cz = v[:, 2].mean()
         if group in ("wheel", "motor") or (group == "fastener" and "M3_X_30" in " ".join(path)):
@@ -434,7 +497,7 @@ def main():
     # camera's, which is on the top edge of the camera board
     cam_end = place_camera(np.array([FFC_CAMERA_CAD]))[0]
     up = rot_z(np.array([[0.0, 1.0, 0.0]]), (0.0, 0.0), CAM_PITCH_DEG)[0][:2]
-    rv, rf, ffc_line = ribbon(FFC_JETSON, (0.0, 1.0), cam_end, up)
+    rv, rf, ffc_line = ribbon(FFC_JETSON, (0.0, 1.0), cam_end, up, reach=0.042)
     cvs, cfs = parts["camera"]["by_colour"].setdefault("#d8d4c4", ([], []))
     cvs.append(rv)
     cfs.append(rf + sum(len(a) for a in cvs[:-1]))
@@ -449,7 +512,7 @@ def main():
             vs.append(v)
             fs.append(f + off)
 
-    problems = check(parts, mount, rv, cam_end, place_camera)
+    problems = check(parts, mount, fixed, rv, cam_end, place_camera, cam_cad)
     if problems:
         raise SystemExit(f"{problems} geometry check(s) failed: nothing written")
 

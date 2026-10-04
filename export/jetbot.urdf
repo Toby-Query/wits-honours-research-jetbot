@@ -64,7 +64,7 @@
   <link name="camera_link"/>
   <joint name="camera_joint" type="fixed">
     <parent link="base_link"/><child link="camera_link"/>
-    <origin xyz="0.06660 0.00000 0.06420"/>
+    <origin xyz="0.07460 0.00000 0.07520"/>
   </joint>
   <link name="camera_optical"/>
   <joint name="camera_optical_joint" type="fixed">
