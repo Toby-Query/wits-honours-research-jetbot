@@ -12,7 +12,7 @@ python -m jetbot_twin --calibrated compare --session 2026-10-04
 
 **Done so far:** the two stationary experiments, the driver-chip test, the
 wheels-up sweep, the stall, the straight run and spin on the floor, the
-held-out square, and ten repeats of its corner.
+held-out square, and its corner repeated ten times and then twenty-four.
 
 ## What the probe found
 
@@ -398,6 +398,50 @@ cause is the status display, which shares the I²C bus: a refresh of it holds
 the bus for tens of milliseconds, and a motor command has to wait. That has
 not been confirmed; pausing the display's service during a run would test it.
 
+## Experiment 9: twenty-four short turns, with the timing fixed
+
+The same turn, 24 times, after the agent was reworked. Every command lasted
+between 288 and 297 ms (standard deviation 2.2 ms), so what varies now is the
+robot.
+
+![The 24 turns against the twin](img/real_short_turns_24.png)
+
+| | Robot | Twin |
+|---|---|---|
+| Mean turn | 94.3° | 83.7° |
+| Spread (standard deviation) | 7.6° (8 %) | 0.8° |
+| Range | 73° to 108° | |
+| Trend through the run | none (−0.08° per turn, ±0.23) | |
+| Drift of the robot's position | 3 cm by the end | |
+
+**The bias is real: the robot turns 10.6° further than the twin, 12.6 % more.**
+That is 6.9 standard errors over 24 turns. In experiment 8 it was two
+standard errors and not to be relied on; with the timing held still it is not
+in doubt.
+
+**The robot repeats a short turn to about ±8°.** With timing no longer
+contributing, this is the robot and the floor. It is a floor under any model:
+a twin that was otherwise perfect would still miss a single quarter-turn by
+this much, and four of them in a square by roughly twice it.
+
+**No single number in the twin explains the bias.** Each plausible one was
+fitted to these 24 turns on its own, then checked against the spin and the
+straight run, which it must not break:
+
+| Parameter moved | To match the turns it goes | And then |
+|---|---|---|
+| Breakaway friction | nowhere: it has no effect | |
+| Rotor inertia | to its limit, a third of the estimate | still 2.5° short; and the wheels-up spin-up time, which matched at 80 ms against 83, would not |
+| Inertia about the vertical axis | to its limit, 0.3 of the estimate | still 6° short |
+| Caster friction | 0.324 → 0.179 | matches the turns exactly, but the 2 s spin goes to 1084° (robot 1033°) and the straight run to 1.48 m (robot 1.43 m) |
+
+So the caster's drag has to be lower in the first third of a second of a turn
+than it is in a sustained spin, and the twin has one caster friction for
+both. That is a statement about the model's form, not its numbers: a ball
+caster that rolls freely at first and only starts to drag once it is being
+pushed sideways continuously would do it. That is a hypothesis; nothing here
+tests it directly. `hardware.py` is unchanged.
+
 ## What changed in the twin as a result
 
 | | Was | Now | From |
@@ -417,8 +461,8 @@ not been confirmed; pausing the display's service during a run would test it.
 
 ## Still to do
 
-More than ten short turns, with the timing now tighter, to see whether the
-7° bias is real. Whether the status display is what still delays commands.
-The square again. `step_response`. Extra holds near full command, to look at the bend. And the hand
+A caster model whose drag depends on how long it has been sliding, to see
+whether one model can match both the short turns and the long spin. The
+square again, with the timing now tight. `step_response`. Extra holds near full command, to look at the bend. And the hand
 measurements: the robot's mass, the wheel's diameter, the cells'
 label.

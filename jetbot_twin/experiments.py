@@ -127,6 +127,12 @@ EXPERIMENTS = {e.name: e for e in [
         settles=["how repeatable a short turn is",
                  "motor_friction_static_ratio (breakaway friction)"],
         measure=["the angle turned in each of the ten"]),
+    Experiment(
+        "short_turns_24", [(1.5, 0, 0)] + [(0.29, -TURN, TURN), (1.2, 0, 0)] * 24,
+        "The same corner, twenty-four times, after the agent's timing was "
+        "tightened: enough to say whether the twin's bias is real.",
+        settles=["whether the twin is biased on a short turn"],
+        measure=["the angle turned in each"]),
 ]}
 
 JETSON_POWER = {"idle": "jetson_p_idle", "teleop": "jetson_p_teleop",
@@ -204,7 +210,7 @@ def predict_manual(exp, log):
         return {"turns_l": tl, "turns_r": tr, "rpm": rpm}
     if n == "step_response":
         return {"offset_m": log.final("x")}
-    if n == "short_turns":
+    if n.startswith("short_turns"):
         th = [math.degrees(v) for v in log["th"]]
         out, t = [], exp.profile[0][0]
         for seconds, left, right in exp.profile[1:]:
