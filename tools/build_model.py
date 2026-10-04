@@ -68,7 +68,9 @@ NODE_NAMES = {
     "fastener": ("Screws", "Fasteners"),
     "standoff": ("Standoffs", "Brass standoffs and spacers between the boards"),
     "camera": ("Camera", "IMX219-160, 8 MP, 160 degree lens, and its ribbon"),
-    "camera_mount": ("Camera mount", "Aluminium camera bracket"),
+    "camera_mount": ("Camera mount", "Hinged aluminium bracket: folded upright, pivot "
+                     "screw, tilting plate, spacer. Modelled from a photograph of "
+                     "this robot, not from Waveshare's CAD, which shows a fixed one"),
     "antenna": ("Antenna", "Dual-band Wi-Fi antenna and its lead"),
     "wheel": ("Wheel", "65 mm wheel, rubber tyre on a plastic hub"),
 }
@@ -152,11 +154,110 @@ def tessellated():
     return out
 
 
+# --------------------------------------------------------------------------
+# The camera mount. Waveshare's CAD has a fixed bracket; the kit as shipped
+# (and as photographed on this robot, 2026-10-04) has a HINGED one: a folded
+# upright, a pivot screw, a small tilting plate, a yellow-green spacer, and
+# the camera on that. The CAD bracket is dropped and this one built in its
+# place. Its proportions are taken from the photograph against the 25 mm
+# camera board, not from a drawing: it is a likeness, not a measurement.
+# --------------------------------------------------------------------------
+CAM_PITCH_DEG = 0.0        # lens axis above horizontal; negative looks down.
+                           # ASSUMED level, from the photograph. Set to yours.
+GREEN, SPACER, BLACK = "#57b947", "#c5d93a", "#151515"
+
+
+def rot_z(points, centre, deg):
+    """Rotate glTF points about a z-parallel axis through `centre` (x, y)."""
+    a = np.radians(deg)
+    c, s_ = np.cos(a), np.sin(a)
+    out = points.copy()
+    dx, dy = points[:, 0] - centre[0], points[:, 1] - centre[1]
+    out[:, 0] = centre[0] + c * dx - s_ * dy
+    out[:, 1] = centre[1] + s_ * dx + c * dy
+    return out
+
+
+def camera_frame(leaves):
+    """Where the CAD puts the camera board, and which way it faces."""
+    board = lens = None
+    for path, v, _ in leaves:
+        if "Raspberry_Pi_Camera" not in " ".join(path):
+            continue
+        g = to_gltf(np.asarray(v, float))
+        size = g.max(0) - g.min(0)
+        if abs(size[2] - 0.025) < 0.001 and board is None:
+            board = g
+        if abs(size[2] - 0.010) < 0.001:
+            lens = g
+    c = (board.min(0) + board.max(0)) / 2
+    # the board is a thin plate turning about z: its normal is the short
+    # direction of its x-y footprint
+    xy = board[:, :2] - c[:2]
+    w, vecs = np.linalg.eigh(np.cov(xy.T))
+    n = vecs[:, 0]
+    lc = (lens.min(0) + lens.max(0)) / 2
+    if np.dot(lc[:2] - c[:2], n) < 0:
+        n = -n                                     # normal points out of the lens
+    pitch = np.degrees(np.arctan2(n[1], n[0]))
+    return c, n, pitch, lc
+
+
+def box(size, centre, deg=0.0, pivot=None):
+    m = trimesh.creation.box(extents=size)
+    v = np.asarray(m.vertices) + np.asarray(centre)
+    if deg:
+        v = rot_z(v, pivot, deg)
+    return v, np.asarray(m.faces)
+
+
+def barrel(radius, length, centre):
+    m = trimesh.creation.cylinder(radius=radius, height=length, sections=28)
+    return np.asarray(m.vertices) + np.asarray(centre), np.asarray(m.faces)
+
+
+def hinged_mount(c, n, turn):
+    """The mount, as {colour: [(vertices, faces), ...]}, and the pivot."""
+    t = np.array([-n[1], n[0]])                    # along the board, upward
+    back = lambda d: np.array([c[0] - n[0] * d, c[1] - n[1] * d, 0.0])
+    deg = np.degrees(np.arctan2(n[1], n[0]))
+    pivot = back(0.0115)[:2] - t * 0.004           # just behind and below centre
+    pieces = {SPACER: [], GREEN: [], BLACK: []}
+    # yellow-green spacer, then the tilting plate, both lying on the board
+    pieces[SPACER].append(box((0.003, 0.027, 0.027), back(0.0022), deg, back(0.0022)[:2]))
+    pieces[GREEN].append(box((0.002, 0.027, 0.027), back(0.0047), deg, back(0.0047)[:2]))
+    # its two ears, reaching back to the pivot
+    for z in (-0.0095, 0.0095):
+        ear = back(0.0085) + np.array([-t[0] * 0.004, -t[1] * 0.004, z])
+        pieces[GREEN].append(box((0.008, 0.009, 0.002), ear, deg, ear[:2]))
+    moved = {k: [(rot_z(v, pivot, turn), f) for v, f in lst] for k, lst in pieces.items()}
+    px, py = rot_z(np.array([[pivot[0], pivot[1], 0.0]]), pivot, turn)[0][:2]
+    # fixed parts: the pivot barrel, its screw, and the folded upright
+    moved[GREEN].append(barrel(0.0042, 0.017, (px, py, 0.0)))
+    for z in (-0.0125, 0.0125):
+        moved[GREEN].append(box((0.014, 0.011, 0.002), (px - 0.004, py, z)))
+        moved[BLACK].append(barrel(0.0026, 0.002, (px, py, z + np.sign(z) * 0.0018)))
+    floor_y = 0.0529                               # top of the chassis box
+    h = py - floor_y + 0.004
+    xb = px - 0.011
+    moved[GREEN].append(box((0.002, h, 0.027), (xb, floor_y + h / 2, 0.0)))
+    for z in (-0.0125, 0.0125):
+        moved[GREEN].append(box((0.012, h, 0.002), (xb + 0.005, floor_y + h / 2, z)))
+    moved[GREEN].append(box((0.014, 0.002, 0.027), (xb + 0.006, floor_y + 0.001, 0.0)))
+    return moved, pivot
+
+
 def main():
     parts = {}                     # node name -> dict(meshes by colour, meta)
-    for path, v, f in tessellated():
+    all_leaves = tessellated()
+    cam_c, cam_n, cad_pitch, lens_c = camera_frame(all_leaves)
+    turn = CAM_PITCH_DEG - cad_pitch               # CAD tilt -> the tilt wanted
+    mount, cam_pivot = hinged_mount(cam_c, cam_n, turn)
+    for path, v, f in all_leaves:
         v, f = np.asarray(v, float), np.asarray(f, int)
         group, name, desc, colour = classify(path[1:])
+        if group == "camera_mount":
+            continue                               # replaced, see above
         side = ""
         cz = v[:, 2].mean()
         if group in ("wheel", "motor") or (group == "fastener" and "M3_X_30" in " ".join(path)):
@@ -177,8 +278,21 @@ def main():
             p["name"], p["desc"] = name, desc
         vs, fs = p["by_colour"].setdefault(colour, ([], []))
         off = sum(len(a) for a in vs)
-        vs.append(to_gltf(v))
+        g = to_gltf(v)
+        if group == "camera":
+            g = rot_z(g, cam_pivot, turn)
+        vs.append(g)
         fs.append(f + off)
+
+    p = parts["camera_mount"] = {
+        "group": "camera_mount", "name": "Camera mount", "by_colour": {},
+        "desc": "Hinged aluminium bracket with a tilting plate and spacer"}
+    for colour, lst in mount.items():
+        vs, fs = p["by_colour"].setdefault(colour, ([], []))
+        for v, f in lst:
+            off = sum(len(a) for a in vs)
+            vs.append(v)
+            fs.append(f + off)
 
     scene = trimesh.Scene()
     meta = {"frame": "glTF: x forward, y up, z right, metres; origin on the "
@@ -227,6 +341,11 @@ def main():
             "pieces": len(p["by_colour"]),
         }
 
+    lens = rot_z(lens_c[None, :], cam_pivot, turn)[0]
+    meta["camera"] = {"lens": lens.round(5).tolist(), "pitch_deg": CAM_PITCH_DEG,
+                      "cad_pitch_deg": round(float(cad_pitch), 2)}
+    print(f"camera: CAD has it at {cad_pitch:+.1f} deg; set to {CAM_PITCH_DEG:+.1f} deg; "
+          f"lens at x {lens[0] * 1e3:.1f}, y {lens[1] * 1e3:.1f} mm")
     (ROOT / "web").mkdir(exist_ok=True)
     glb = ROOT / "web" / "jetbot.glb"
     glb.write_bytes(scene.export(file_type="glb"))

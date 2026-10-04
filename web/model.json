@@ -86,13 +86,13 @@
    "name": "Camera",
    "desc": "IMX219-160, 8 MP, 160 degree lens, and its ribbon",
    "centre": [
-    0.04727,
-    0.10365,
+    0.04556,
+    0.10822,
     0.00125
    ],
    "size": [
-    0.03447,
-    0.04646,
+    0.03995,
+    0.04094,
     0.0275
    ],
    "pieces": 2
@@ -100,18 +100,18 @@
   "camera_mount": {
    "group": "camera_mount",
    "name": "Camera mount",
-   "desc": "Aluminium camera bracket",
+   "desc": "Hinged aluminium bracket: folded upright, pivot screw, tilting plate, spacer. Modelled from a photograph of this robot, not from Waveshare's CAD, which shows a fixed one",
    "centre": [
-    0.03847,
-    0.08056,
+    0.03544,
+    0.08308,
     0.0
    ],
    "size": [
-    0.02675,
-    0.05542,
-    0.04
+    0.0228,
+    0.06035,
+    0.0306
    ],
-   "pieces": 2
+   "pieces": 3
   },
   "caster_a": {
    "group": "caster",
@@ -337,5 +337,14 @@
    ],
    "pieces": 2
   }
+ },
+ "camera": {
+  "lens": [
+   0.06266,
+   0.09643,
+   0.0
+  ],
+  "pitch_deg": 0.0,
+  "cad_pitch_deg": -20.0
  }
 }

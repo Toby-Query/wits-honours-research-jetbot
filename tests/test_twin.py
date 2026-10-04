@@ -64,6 +64,27 @@ def test_twin_and_agent_write_identical_registers():
         def set_pwm(self, ch, on, off):
             self.reg[ch] = (on, off)
 
+    # ... and the agent must put each count in its own register: the real
+    # chip ignores a block write unless auto-increment is on.
+    class Bus:
+        def __init__(self):
+            self.reg = {}
+
+        def read_byte_data(self, addr, r):
+            return self.reg.get(r, 0)
+
+        def write_byte_data(self, addr, r, v):
+            self.reg[r] = v
+
+        def write_i2c_block_data(self, *a):
+            raise AssertionError("block write to the PCA9685")
+
+    bus = Bus()
+    pca = agent.Pca9685(bus)
+    pca.set_pwm(8, 0, 1216)
+    assert pca.get_pwm(8) == (0, 1216)
+    assert pca.prescale == 3
+
     for side in ("left", "right"):
         for value in (-1.0, -0.37, 0.0, 0.05, 0.3, 0.999, 1.0):
             rec = Recorder()
@@ -144,7 +165,7 @@ def test_the_two_chips_have_different_dead_bands():
 
 
 def test_held_wheels_draw_stall_current_and_go_nowhere():
-    tw = JetBotTwin()
+    tw = JetBotTwin(board="drv8870")
     tw.dyn.held = True
     log = tw.run([(1.0, 0.5, 0.5)])
     assert log.final("x") == 0

@@ -95,7 +95,14 @@ const fallback = new THREE.Mesh(new THREE.BoxGeometry(0.134, 0.07, 0.096),
 fallback.position.set(-0.022, 0.05, 0);
 robot.add(fallback);
 
-fetch('./model.json').then((r) => r.json()).then((m) => { partMeta = m.parts; }).catch(() => {});
+fetch('./model.json').then((r) => r.json()).then((m) => {
+  partMeta = m.parts;
+  if (m.camera) {                       // look out of the lens, at its real tilt
+    eye.position.set(m.camera.lens[0] + 0.006, m.camera.lens[1], m.camera.lens[2]);
+    eye.rotation.set(0, -Math.PI / 2, 0);
+    eye.rotateX(m.camera.pitch_deg * Math.PI / 180);
+  }
+}).catch(() => {});
 new GLTFLoader().load('./jetbot.glb', (g) => {
   robot.remove(fallback);
   model = g.scene;

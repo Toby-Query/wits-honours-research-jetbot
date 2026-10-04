@@ -123,7 +123,10 @@ class Hardware:
     # ----------------------------------------------------------- motor drivers
     # The board has footprints for both; which is fitted decides how the
     # motor is PWMed. See docs/ELECTRICAL.md.
-    board: str = "drv8870"           # "drv8870" | "tb6612"
+    # MEASURED 2026-10-04 on the robot (`agent.py identify`): driving only the
+    # TB6612FNG's channels dipped the rail 204 mV; driving only the DRV8870
+    # channels did nothing. This board has an INA219 AND a TB6612FNG.
+    board: str = "tb6612"            # "drv8870" | "tb6612"
     pwm_request_hz: float = datasheet(1600.0, "Adafruit_MotorHAT default")
     drv8870_r_on: float = datasheet(0.565, "DRV8870: HS + LS, typical at 25 C")
     drv8870_i_peak: float = datasheet(3.6, "DRV8870: peak / overcurrent trip")
@@ -202,8 +205,11 @@ class Hardware:
     cam_f_mm: float = datasheet(3.15, "IMX219-160")
     cam_fov_diag_deg: float = datasheet(160.0, "IMX219-160")
     cam_pixel_um: float = datasheet(1.12, "IMX219")
-    cam_pos: tuple = (0.054, 0.0, 0.0937)            # lens centre, STEP
-    cam_pitch_deg: float = assumed(0.0, "holder tilt; the CAD shows it level")
+    cam_pos: tuple = (0.063, 0.0, 0.096)             # lens centre with the mount level
+    cam_pitch_deg: float = assumed(
+        0.0, "the mount is hinged (photographed 2026-10-04), so this is whatever "
+        "it was last set to; Waveshare's CAD has a fixed bracket at -20 degrees. "
+        "Measure it. Also set CAM_PITCH_DEG in tools/build_model.py")
 
     ambient: float = 25.0
 

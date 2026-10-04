@@ -10,8 +10,8 @@ python -m jetbot_twin calibrate --session 2026-10-04
 python -m jetbot_twin --calibrated compare --session 2026-10-04
 ```
 
-**Only the two stationary experiments have been run so far.** Nothing about
-the motors, the driver chip or the motion has been tested yet.
+**The two stationary experiments and the driver-chip test have been run.**
+Nothing about motor constants or motion has been tested yet.
 
 ## What the probe found
 
@@ -83,6 +83,33 @@ a full pack before using the number for anything.
 
 With no desktop session active and nothing running. The assumed figure was
 pessimistic by more than half.
+
+## Which driver chip: the TB6612FNG
+
+Without opening the robot. The two possible chips are wired to different
+PCA9685 channels, so `robot/agent.py identify` drives one set at a time
+(wheels off the ground, one second each at half command) and watches the
+battery rail:
+
+| Channels driven | Rail dipped by |
+|---|---|
+| 0–3 only (DRV8870 inputs) | 0 mV |
+| 8–13 only (TB6612FNG pins) | 204 mV |
+
+So this board has the TB6612FNG, and `board` in `hardware.py` is now
+`"tb6612"`. Of the two sets of predictions made beforehand, the ones that
+apply are the TB6612FNG ones: slow decay, a nearly straight speed-against-command
+line starting at about 0.1, and braking when the command returns to zero. The
+wheels-up sweep will test those.
+
+This corrects a guess of mine: I had taken the INA219 to mean the later,
+DRV8870 board. It does not.
+
+It also exposed a bug in the agent, which had never driven a real PCA9685:
+it sent each PWM setting as one four-byte write, which the chip only spreads
+over four registers when its auto-increment bit is set. The first run of this
+test therefore moved nothing. The agent now writes one register at a time, as
+the Adafruit library does, and reads one back to confirm.
 
 ## Still to do
 

@@ -129,14 +129,24 @@ class Pca9685(object):
         self.bus.write_byte_data(self.addr, self.MODE1, old | 0x80)
         self.prescale = prescale
 
+    # One register per write, as Adafruit_PCA9685 does. A single four-byte
+    # write only lands on four registers if MODE1's auto-increment bit is
+    # set, and nothing here sets it: sent as a block, all four bytes pile
+    # into the first register and the output never changes.
+    def _write4(self, base, on, off):
+        for k, v in enumerate((on & 0xFF, on >> 8, off & 0xFF, off >> 8)):
+            self.bus.write_byte_data(self.addr, base + k, v)
+
     def set_pwm(self, ch, on, off):
-        base = self.LED0 + 4 * ch
-        self.bus.write_i2c_block_data(
-            self.addr, base, [on & 0xFF, on >> 8, off & 0xFF, off >> 8])
+        self._write4(self.LED0 + 4 * ch, on, off)
+
+    def get_pwm(self, ch):
+        b = [self.bus.read_byte_data(self.addr, self.LED0 + 4 * ch + k)
+             for k in range(4)]
+        return b[0] | (b[1] << 8), b[2] | (b[3] << 8)
 
     def set_all(self, on, off):
-        self.bus.write_i2c_block_data(
-            self.addr, 0xFA, [on & 0xFF, on >> 8, off & 0xFF, off >> 8])
+        self._write4(0xFA, on, off)
 
 
 def write_motor(pca, side, value, alpha=1.0, beta=0.0):
@@ -453,6 +463,61 @@ def run(exp, out_path, countdown):
     print("wrote %s: %d samples over %.1f s" % (out_path, len(rows), total))
 
 
+def identify(duty=0.5, seconds=1.0):
+    """Which motor driver is fitted? Wheels must be OFF THE GROUND.
+
+    The two possible chips hang off different PCA9685 channels. The normal
+    software writes both sets; this writes one set at a time and watches the
+    battery rail for the dip that running motors cause.
+    """
+    bus = open_bus()
+    pca = Pca9685(bus)
+    ina = Ina219(bus)
+    counts = int(duty * 4095)
+
+    def watch(t):
+        v, end = [], time.time() + t
+        while time.time() < end:
+            v.append(ina.read()[0])
+            time.sleep(0.01)
+        v.sort()
+        return v[len(v) // 2], v
+
+    out = {}
+    try:
+        release(pca)
+        time.sleep(0.5)
+        base, _ = watch(0.6)
+        # 1: the DRV8870 inputs only (channels 0..3); 8..13 stay released
+        for side in ("left", "right"):
+            pca.set_pwm(DRV[side]["in1"], 0, counts)
+            pca.set_pwm(DRV[side]["in2"], 0, 0)
+        out["readback_ch1"] = pca.get_pwm(1)     # did the write land?
+        time.sleep(0.25)
+        v_drv, _ = watch(seconds)
+        release(pca)
+        time.sleep(1.2)
+        base2, _ = watch(0.6)
+        # 2: the TB6612FNG pins only (channels 8..13); 0..3 stay at zero
+        for side in ("left", "right"):
+            pca.set_pwm(HAT[side]["in1"], 0, 4096)
+            pca.set_pwm(HAT[side]["in2"], 4096, 0)
+            pca.set_pwm(HAT[side]["pwm"], 0, counts)
+        time.sleep(0.25)
+        v_tb, _ = watch(seconds)
+    finally:
+        release(pca)
+    out.update({"rest_v": base, "rest_v_2": base2,
+           "drv8870_channels_v": v_drv, "tb6612_channels_v": v_tb,
+           "sag_drv8870_mV": round((base - v_drv) * 1000),
+           "sag_tb6612_mV": round((base2 - v_tb) * 1000),
+           "charge_i": ina.read()[1], "pwm_hz": 25e6 / 4096 / (pca.prescale + 1)})
+    a, b = out["sag_drv8870_mV"], out["sag_tb6612_mV"]
+    out["verdict"] = ("drv8870" if a > 40 and a > 3 * max(b, 1) else
+                      "tb6612" if b > 40 and b > 3 * max(a, 1) else "unclear")
+    print(json.dumps(out, indent=1))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -460,6 +525,7 @@ def main():
     sub.required = True
     sub.add_parser("probe")
     sub.add_parser("stop")
+    sub.add_parser("identify")
     r = sub.add_parser("run")
     r.add_argument("experiment", help="JSON file from the twin")
     r.add_argument("-o", "--out", default="log.csv")
@@ -467,6 +533,8 @@ def main():
     a = ap.parse_args()
     if a.cmd == "probe":
         probe()
+    elif a.cmd == "identify":
+        identify()
     elif a.cmd == "stop":
         release(Pca9685(open_bus()))
         print("motors released")

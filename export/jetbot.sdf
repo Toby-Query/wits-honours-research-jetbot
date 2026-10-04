@@ -23,7 +23,7 @@
         <surface><friction><ode><mu>0.25</mu><mu2>0.25</mu2></ode></friction></surface>
       </collision>
       <sensor name="camera" type="wideanglecamera">
-        <pose>0.05400 0.00000 0.06120 0 0 0</pose>
+        <pose>0.06300 0.00000 0.06350 0 0 0</pose>
         <update_rate>21</update_rate>
         <camera>
           <horizontal_fov>2.400</horizontal_fov>
