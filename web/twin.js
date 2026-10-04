@@ -25,6 +25,9 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 50);
 camera.position.set(-0.45, 0.38, 0.55);
+const lookFrom = new URLSearchParams(location.search).get('view');   // ?view=front | side
+if (lookFrom === 'front') camera.position.set(0.30, 0.20, 0.26);
+if (lookFrom === 'side') camera.position.set(0.02, 0.10, 0.34);
 const controls = new OrbitControls(camera, canvas);
 controls.target.set(0, 0.06, 0);
 controls.enableDamping = true;

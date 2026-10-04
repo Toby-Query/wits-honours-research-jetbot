@@ -157,8 +157,9 @@ def tessellated():
 # --------------------------------------------------------------------------
 # The camera mount. Waveshare's CAD has a fixed bracket; the kit as shipped
 # (and as photographed on this robot, 2026-10-04) has a HINGED one: a folded
-# upright, a pivot screw, a small tilting plate, a yellow-green spacer, and
-# the camera on that. The CAD bracket is dropped and this one built in its
+# upright standing on the front edge of the chassis, wholly ahead of both
+# circuit boards; a pivot screw; a small tilting bracket; a yellow-green
+# spacer; and the camera on that, overhanging the front of the robot. The CAD bracket is dropped and this one built in its
 # place. Its proportions are taken from the photograph against the 25 mm
 # camera board, not from a drawing: it is a likeness, not a measurement.
 # --------------------------------------------------------------------------
@@ -216,43 +217,58 @@ def barrel(radius, length, centre):
     return np.asarray(m.vertices) + np.asarray(centre), np.asarray(m.faces)
 
 
-def hinged_mount(c, n, turn):
-    """The mount, as {colour: [(vertices, faces), ...]}, and the pivot."""
-    t = np.array([-n[1], n[0]])                    # along the board, upward
-    back = lambda d: np.array([c[0] - n[0] * d, c[1] - n[1] * d, 0.0])
-    deg = np.degrees(np.arctan2(n[1], n[0]))
-    pivot = back(0.0115)[:2] - t * 0.004           # just behind and below centre
-    pieces = {SPACER: [], GREEN: [], BLACK: []}
-    # yellow-green spacer, then the tilting plate, both lying on the board
-    pieces[SPACER].append(box((0.003, 0.027, 0.027), back(0.0022), deg, back(0.0022)[:2]))
-    pieces[GREEN].append(box((0.002, 0.027, 0.027), back(0.0047), deg, back(0.0047)[:2]))
-    # its two ears, reaching back to the pivot
-    for z in (-0.0095, 0.0095):
-        ear = back(0.0085) + np.array([-t[0] * 0.004, -t[1] * 0.004, z])
-        pieces[GREEN].append(box((0.008, 0.009, 0.002), ear, deg, ear[:2]))
-    moved = {k: [(rot_z(v, pivot, turn), f) for v, f in lst] for k, lst in pieces.items()}
-    px, py = rot_z(np.array([[pivot[0], pivot[1], 0.0]]), pivot, turn)[0][:2]
-    # fixed parts: the pivot barrel, its screw, and the folded upright
-    moved[GREEN].append(barrel(0.0042, 0.017, (px, py, 0.0)))
-    for z in (-0.0125, 0.0125):
-        moved[GREEN].append(box((0.014, 0.011, 0.002), (px - 0.004, py, z)))
-        moved[BLACK].append(barrel(0.0026, 0.002, (px, py, z + np.sign(z) * 0.0018)))
-    floor_y = 0.0529                               # top of the chassis box
-    h = py - floor_y + 0.004
-    xb = px - 0.011
-    moved[GREEN].append(box((0.002, h, 0.027), (xb, floor_y + h / 2, 0.0)))
-    for z in (-0.0125, 0.0125):
-        moved[GREEN].append(box((0.012, h, 0.002), (xb + 0.005, floor_y + h / 2, z)))
-    moved[GREEN].append(box((0.014, 0.002, 0.027), (xb + 0.006, floor_y + 0.001, 0.0)))
-    return moved, pivot
+# Where things are, in glTF metres (x forward, y up), read off the two
+# photographs against known sizes: the camera board is 25 mm, the chassis box
+# ends at x = 44.8 mm and both circuit boards end at x = 35.2 mm. The upright
+# stands in the 9 mm between those, so it clears the boards entirely.
+CHASSIS_TOP, CHASSIS_FRONT, BOARDS_FRONT = 0.0529, 0.0448, 0.0352
+PIVOT = (0.0410, 0.0970)             # the hinge screw
+BOARD_AT = (0.0515, 0.1000)          # centre of the camera board, mount level
+WIDTH = 0.024                        # of the upright, across the robot
+
+
+def hinged_mount(pitch):
+    """The mount, as {colour: [(vertices, faces), ...]}."""
+    px, py = PIVOT
+    out = {SPACER: [], GREEN: [], BLACK: []}
+    # --- fixed: a channel folded from sheet, web to the front, open to the rear
+    top = py + 0.003
+    h = top - CHASSIS_TOP
+    web_x = CHASSIS_FRONT - 0.0012
+    back_x = BOARDS_FRONT + 0.0012                 # the flanges stop short of the boards
+    depth = web_x - back_x
+    out[GREEN].append(box((0.0015, h, WIDTH), (web_x, CHASSIS_TOP + h / 2, 0.0)))
+    for z in (-WIDTH / 2, WIDTH / 2):
+        out[GREEN].append(box((depth, h - 0.004, 0.0015),
+                              (back_x + depth / 2, CHASSIS_TOP + (h - 0.004) / 2, z)))
+        out[GREEN].append(barrel(0.0055, 0.0015, (px, py, z)))       # rounded ear
+        out[BLACK].append(barrel(0.0027, 0.0022, (px, py, z + np.sign(z) * 0.0030)))
+    out[GREEN].append(box((depth, 0.0015, WIDTH), (back_x + depth / 2, CHASSIS_TOP + 0.0008, 0.0)))
+    # --- tilting: a small bracket whose ears sit outside the upright's,
+    #     a plate across its front, the spacer, then the camera board
+    tilt = {SPACER: [], GREEN: []}
+    plate_x = BOARD_AT[0] - 0.0005 - 0.003 - 0.001
+    tilt[GREEN].append(box((0.002, 0.027, 0.027), (plate_x, BOARD_AT[1], 0.0)))
+    tilt[SPACER].append(box((0.003, 0.027, 0.027), (plate_x + 0.0025, BOARD_AT[1], 0.0)))
+    for z in (-WIDTH / 2 - 0.0016, WIDTH / 2 + 0.0016):
+        reach = plate_x - px
+        tilt[GREEN].append(box((reach + 0.004, 0.010, 0.0015), (px + reach / 2, py, z)))
+    for colour, lst in tilt.items():
+        out[colour] += [(rot_z(v, PIVOT, pitch), f) for v, f in lst]
+    return out
 
 
 def main():
     parts = {}                     # node name -> dict(meshes by colour, meta)
     all_leaves = tessellated()
     cam_c, cam_n, cad_pitch, lens_c = camera_frame(all_leaves)
-    turn = CAM_PITCH_DEG - cad_pitch               # CAD tilt -> the tilt wanted
-    mount, cam_pivot = hinged_mount(cam_c, cam_n, turn)
+    mount = hinged_mount(CAM_PITCH_DEG)
+
+    def place_camera(g):
+        """CAD camera -> level, onto the spacer, then tilted about the hinge."""
+        g = rot_z(g, cam_c[:2], -cad_pitch)
+        g = g + np.array([BOARD_AT[0] - cam_c[0], BOARD_AT[1] - cam_c[1], 0.0])
+        return rot_z(g, PIVOT, CAM_PITCH_DEG)
     for path, v, f in all_leaves:
         v, f = np.asarray(v, float), np.asarray(f, int)
         group, name, desc, colour = classify(path[1:])
@@ -280,7 +296,7 @@ def main():
         off = sum(len(a) for a in vs)
         g = to_gltf(v)
         if group == "camera":
-            g = rot_z(g, cam_pivot, turn)
+            g = place_camera(g)
         vs.append(g)
         fs.append(f + off)
 
@@ -341,7 +357,7 @@ def main():
             "pieces": len(p["by_colour"]),
         }
 
-    lens = rot_z(lens_c[None, :], cam_pivot, turn)[0]
+    lens = place_camera(lens_c[None, :])[0]
     meta["camera"] = {"lens": lens.round(5).tolist(), "pitch_deg": CAM_PITCH_DEG,
                       "cad_pitch_deg": round(float(cad_pitch), 2)}
     print(f"camera: CAD has it at {cad_pitch:+.1f} deg; set to {CAM_PITCH_DEG:+.1f} deg; "
