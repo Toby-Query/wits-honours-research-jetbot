@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jetbot-twin"
+version = "0.1.0"
+description = "A digital twin of the Waveshare JetBot, and elecsim: the code-first electrical simulation framework it is built on"
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+analysis = ["scipy>=1.10", "matplotlib>=3.7"]
+cad = ["build123d>=0.9", "trimesh>=4"]
+dev = ["pytest>=7", "scipy>=1.10", "matplotlib>=3.7"]
+
+[project.scripts]
+elecsim = "elecsim.cli:main"
+jetbot-twin = "jetbot_twin.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["elecsim*", "jetbot_twin*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

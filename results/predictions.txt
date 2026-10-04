@@ -1,0 +1,100 @@
+
+drv8870: 40 robots drawn from the uncertainty in hardware.py
+                                            nominal        5 %     median       95 %
+  wheels-up rpm at 0.1                            0          0          0          0
+  wheels-up rpm at 0.15                           0          0          0          0
+  wheels-up rpm at 0.2                            0          0          0       92.4
+  wheels-up rpm at 0.25                        95.7          0       89.3        176
+  wheels-up rpm at 0.3                          166       76.2        173        243
+  wheels-up rpm at 0.4                          269        177        284        345
+  wheels-up rpm at 0.5                          335        240        342        400
+  wheels-up rpm at 0.6                          381        290        387        445
+  wheels-up rpm at 0.8                          437        348        439        520
+  wheels-up rpm at 1                            505        411        506        593
+  lowest command that turns a free wheel       0.25        0.2       0.25        0.3
+  straight: distance, m                        1.86       1.23        1.9       2.43
+  straight: roll-on after cut, m              0.415      0.161      0.429      0.708
+  straight: speed at cut, m/s                 0.942      0.652      0.947       1.15
+  straight: bus sag, mV                         113         73        113        176
+  straight: peak tyre slip, m/s              0.0183     0.0103     0.0185     0.0467
+  spin: rotation, deg                           917        425        911   1.12e+03
+  stall at 0.5: bus sag, mV                     148       83.8        148        288
+  stall at 0.5: motor current each, A         0.569      0.465      0.582       0.71
+  square: end x, m                            0.427     -0.155      0.352       3.83
+  square: end y, m                           -0.558      -2.13    -0.0649      0.468
+  square: end heading, deg                       99       19.8        161        339
+
+  what each prediction depends on most
+  wheels-up rpm at 0.1                    
+  wheels-up rpm at 0.15                   
+  wheels-up rpm at 0.2                    
+  wheels-up rpm at 0.25                   motor_i_noload (-2.08), motor_l (-1.74), motor_rpm_noload (+0.84)
+  wheels-up rpm at 0.3                    motor_i_noload (-1.14), motor_l (-0.97), motor_rpm_noload (+0.90)
+  wheels-up rpm at 0.4                    motor_rpm_noload (+0.96), motor_i_noload (-0.59), motor_l (-0.52)
+  wheels-up rpm at 0.5                    motor_rpm_noload (+0.99), motor_i_noload (-0.38), motor_l (-0.34)
+  wheels-up rpm at 0.6                    motor_rpm_noload (+1.00), motor_i_noload (-0.26), motor_l (-0.25)
+  wheels-up rpm at 0.8                    motor_rpm_noload (+1.00), motor_l (-0.14), motor_i_noload (-0.13)
+  wheels-up rpm at 1                      motor_rpm_noload (+1.00)
+  lowest command that turns a free wheel  
+  straight: distance, m                   wheel_radius (+0.70), motor_rpm_noload (+0.66), motor_l (-0.66)
+  straight: roll-on after cut, m          motor_rpm_noload (+2.08), motor_i_noload (-1.41), wheel_radius (+1.28)
+  straight: speed at cut, m/s             wheel_radius (+0.74), motor_rpm_noload (+0.65), motor_l (-0.51)
+  straight: bus sag, mV                   cell_r0 (+0.53), motor_l (-0.52), holder_r (+0.40)
+  straight: peak tyre slip, m/s           gear_eff (+1.29), mu_tyre (-1.23), motor_rpm_noload (-1.19)
+  spin: rotation, deg                     motor_l (-0.81), motor_i_noload (-0.63), gear_eff (+0.57)
+  stall at 0.5: bus sag, mV               motor_l (-1.22), cell_r0 (+0.56), holder_r (+0.41)
+  stall at 0.5: motor current each, A     motor_l (-0.59), motor_r (-0.36)
+  square: end x, m                        motor_l (-12.11), motor_i_noload (-11.88), gear_eff (+8.37)
+  square: end y, m                        gear_eff (+2.27), wheel_radius (+1.86), motor_r (-1.56)
+  square: end heading, deg                motor_l (+7.42), motor_i_noload (+6.81), gear_eff (+5.43)
+
+tb6612: 40 robots drawn from the uncertainty in hardware.py
+                                            nominal        5 %     median       95 %
+  wheels-up rpm at 0.1                         30.9       16.5       28.9       38.4
+  wheels-up rpm at 0.15                        58.2       44.5       56.8       70.1
+  wheels-up rpm at 0.2                         85.4       67.5       84.1        101
+  wheels-up rpm at 0.25                         111       88.1        109        129
+  wheels-up rpm at 0.3                          138        111        137        159
+  wheels-up rpm at 0.4                          192        156        191        223
+  wheels-up rpm at 0.5                          244        199        244        284
+  wheels-up rpm at 0.6                          298        243        298        348
+  wheels-up rpm at 0.8                          403        328        404        472
+  wheels-up rpm at 1                            508        413        508        596
+  lowest command that turns a free wheel        0.1        0.1        0.1        0.1
+  straight: distance, m                        1.52       1.23        1.5       1.79
+  straight: roll-on after cut, m             0.0685     0.0386     0.0716      0.131
+  straight: speed at cut, m/s                 0.789      0.636      0.778      0.928
+  straight: bus sag, mV                          92       59.8         94        152
+  straight: peak tyre slip, m/s               0.158     0.0366      0.146      0.309
+  spin: rotation, deg                      1.13e+03        950   1.07e+03   1.31e+03
+  stall at 0.5: bus sag, mV                     452        302        464        599
+  stall at 0.5: motor current each, A          1.33       1.13       1.33       1.69
+  square: end x, m                             0.24    0.00218      0.145      0.937
+  square: end y, m                            -0.43     -0.504     -0.136      0.346
+  square: end heading, deg                     80.1         12        137        354
+
+  what each prediction depends on most
+  wheels-up rpm at 0.1                    motor_rpm_noload (+1.00), motor_i_noload (-0.63), motor_r (-0.54)
+  wheels-up rpm at 0.15                   motor_rpm_noload (+1.00), motor_i_noload (-0.30), motor_r (-0.25)
+  wheels-up rpm at 0.2                    motor_rpm_noload (+1.00), motor_i_noload (-0.18), motor_r (-0.15)
+  wheels-up rpm at 0.25                   motor_rpm_noload (+1.00), motor_i_noload (-0.12), motor_r (-0.10)
+  wheels-up rpm at 0.3                    motor_rpm_noload (+1.00), motor_i_noload (-0.08), motor_r (-0.06)
+  wheels-up rpm at 0.4                    motor_rpm_noload (+1.00)
+  wheels-up rpm at 0.5                    motor_rpm_noload (+1.00)
+  wheels-up rpm at 0.6                    motor_rpm_noload (+1.00)
+  wheels-up rpm at 0.8                    motor_rpm_noload (+1.00)
+  wheels-up rpm at 1                      motor_rpm_noload (+1.00)
+  lowest command that turns a free wheel  
+  straight: distance, m                   motor_rpm_noload (+0.92), wheel_radius (+0.91), mu_caster (-0.06)
+  straight: roll-on after cut, m          motor_rpm_noload (+2.77), wheel_radius (+1.79), gear_eff (-0.81)
+  straight: speed at cut, m/s             wheel_radius (+0.95), motor_rpm_noload (+0.95), motor_r (-0.05)
+  straight: bus sag, mV                   motor_i_noload (+0.44), cell_r0 (+0.43), motor_l (-0.43)
+  straight: peak tyre slip, m/s           motor_r (-2.40), gear_eff (+2.27), mu_tyre (-1.89)
+  spin: rotation, deg                     wheel_radius (+0.71), motor_rpm_noload (+0.70), motor_r (-0.19)
+  stall at 0.5: bus sag, mV               motor_r (-0.79), cell_r0 (+0.54), holder_r (+0.37)
+  stall at 0.5: motor current each, A     motor_r (-0.86)
+  square: end x, m                        wheel_radius (+12.52), motor_rpm_noload (+11.03), motor_r (-4.53)
+  square: end y, m                        wheel_radius (+4.68), motor_rpm_noload (+4.27), motor_r (-1.48)
+  square: end heading, deg                wheel_radius (+7.33), motor_rpm_noload (+6.20), motor_r (-2.51)
+
+wrote /Users/thups/Desktop/jetbot nano/jetbot-twin/results/predictions_*.json

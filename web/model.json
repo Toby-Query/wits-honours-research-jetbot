@@ -1,0 +1,341 @@
+{
+ "frame": "glTF: x forward, y up, z right, metres; origin on the floor under the middle of the axle",
+ "parts": {
+  "antenna_a": {
+   "group": "antenna",
+   "name": "Antenna",
+   "desc": "Dual-band Wi-Fi antenna and its lead",
+   "centre": [
+    -0.08,
+    0.13825,
+    -0.039
+   ],
+   "size": [
+    0.014,
+    0.24339,
+    0.0145
+   ],
+   "pieces": 2
+  },
+  "antenna_b": {
+   "group": "antenna",
+   "name": "Antenna",
+   "desc": "Dual-band Wi-Fi antenna and its lead",
+   "centre": [
+    -0.08,
+    0.13825,
+    0.039
+   ],
+   "size": [
+    0.014,
+    0.24339,
+    0.0145
+   ],
+   "pieces": 2
+  },
+  "base": {
+   "group": "base",
+   "name": "Base plate",
+   "desc": "Bottom cover",
+   "centre": [
+    -0.022,
+    0.01685,
+    0.0
+   ],
+   "size": [
+    0.134,
+    0.0018,
+    0.096
+   ],
+   "pieces": 1
+  },
+  "battery": {
+   "group": "battery",
+   "name": "Cell holder",
+   "desc": "3 x 18650 holder",
+   "centre": [
+    -0.0216,
+    0.06925,
+    0.0003
+   ],
+   "size": [
+    0.0592,
+    0.0218,
+    0.078
+   ],
+   "pieces": 1
+  },
+  "board": {
+   "group": "board",
+   "name": "Expansion board",
+   "desc": "Waveshare JetBot expansion board: protection, 5 V buck, motor driver, PCA9685",
+   "centre": [
+    -0.0248,
+    0.05725,
+    0.0003
+   ],
+   "size": [
+    0.12,
+    0.0208,
+    0.079
+   ],
+   "pieces": 3
+  },
+  "camera": {
+   "group": "camera",
+   "name": "Camera",
+   "desc": "IMX219-160, 8 MP, 160 degree lens, and its ribbon",
+   "centre": [
+    0.04727,
+    0.10365,
+    0.00125
+   ],
+   "size": [
+    0.03447,
+    0.04646,
+    0.0275
+   ],
+   "pieces": 2
+  },
+  "camera_mount": {
+   "group": "camera_mount",
+   "name": "Camera mount",
+   "desc": "Aluminium camera bracket",
+   "centre": [
+    0.03847,
+    0.08056,
+    0.0
+   ],
+   "size": [
+    0.02675,
+    0.05542,
+    0.04
+   ],
+   "pieces": 2
+  },
+  "caster_a": {
+   "group": "caster",
+   "name": "Caster",
+   "desc": "Ball caster",
+   "centre": [
+    0.03802,
+    0.00794,
+    0.0
+   ],
+   "size": [
+    0.01333,
+    0.01602,
+    0.02159
+   ],
+   "pieces": 1
+  },
+  "caster_b": {
+   "group": "caster",
+   "name": "Caster",
+   "desc": "Ball caster",
+   "centre": [
+    -0.08198,
+    0.00794,
+    0.0
+   ],
+   "size": [
+    0.01333,
+    0.01602,
+    0.02159
+   ],
+   "pieces": 1
+  },
+  "chassis": {
+   "group": "chassis",
+   "name": "Chassis",
+   "desc": "Folded aluminium box, anodised green",
+   "centre": [
+    -0.022,
+    0.0353,
+    0.0
+   ],
+   "size": [
+    0.1336,
+    0.0351,
+    0.0956
+   ],
+   "pieces": 1
+  },
+  "fan": {
+   "group": "fan",
+   "name": "Fan",
+   "desc": "40 mm fan on the heatsink",
+   "centre": [
+    -0.0128,
+    0.11643,
+    0.0191
+   ],
+   "size": [
+    0.04,
+    0.011,
+    0.04
+   ],
+   "pieces": 1
+  },
+  "fastener": {
+   "group": "fastener",
+   "name": "Screws",
+   "desc": "Fasteners",
+   "centre": [
+    -0.01677,
+    0.06813,
+    0.00275
+   ],
+   "size": [
+    0.13604,
+    0.10911,
+    0.0711
+   ],
+   "pieces": 1
+  },
+  "fastener_left": {
+   "group": "fastener",
+   "name": "Screws",
+   "desc": "Fasteners",
+   "centre": [
+    -0.0205,
+    0.03365,
+    -0.03622
+   ],
+   "size": [
+    0.00641,
+    0.02399,
+    0.02744
+   ],
+   "pieces": 1
+  },
+  "fastener_right": {
+   "group": "fastener",
+   "name": "Screws",
+   "desc": "Fasteners",
+   "centre": [
+    -0.0205,
+    0.03365,
+    0.03622
+   ],
+   "size": [
+    0.00641,
+    0.02399,
+    0.02744
+   ],
+   "pieces": 1
+  },
+  "heatsink": {
+   "group": "heatsink",
+   "name": "Heatsink",
+   "desc": "Jetson Nano module under its heatsink",
+   "centre": [
+    -0.0128,
+    0.10025,
+    0.0168
+   ],
+   "size": [
+    0.0696,
+    0.02137,
+    0.045
+   ],
+   "pieces": 1
+  },
+  "jetson": {
+   "group": "jetson",
+   "name": "Jetson Nano",
+   "desc": "Jetson Nano developer kit: carrier board, connectors, wireless card",
+   "centre": [
+    -0.0148,
+    0.09201,
+    -0.00071
+   ],
+   "size": [
+    0.1,
+    0.02318,
+    0.08102
+   ],
+   "pieces": 1
+  },
+  "motor_left": {
+   "group": "motor",
+   "name": "Gearmotor",
+   "desc": "TT gearmotor, 1:48",
+   "centre": [
+    -0.01895,
+    0.03365,
+    -0.04075
+   ],
+   "size": [
+    0.0705,
+    0.0226,
+    0.0299
+   ],
+   "pieces": 1
+  },
+  "motor_right": {
+   "group": "motor",
+   "name": "Gearmotor",
+   "desc": "TT gearmotor, 1:48",
+   "centre": [
+    -0.01895,
+    0.03365,
+    0.04075
+   ],
+   "size": [
+    0.0705,
+    0.0226,
+    0.0299
+   ],
+   "pieces": 1
+  },
+  "standoff": {
+   "group": "standoff",
+   "name": "Standoffs",
+   "desc": "Brass standoffs and spacers between the boards",
+   "centre": [
+    -0.02029,
+    0.06575,
+    0.00288
+   ],
+   "size": [
+    0.10842,
+    0.0338,
+    0.07153
+   ],
+   "pieces": 1
+  },
+  "wheel_left": {
+   "group": "wheel",
+   "name": "Wheel",
+   "desc": "65 mm wheel, rubber tyre on a plastic hub",
+   "centre": [
+    0.0,
+    0.03365,
+    -0.05745
+   ],
+   "size": [
+    0.06724,
+    0.06725,
+    0.0195
+   ],
+   "pieces": 2
+  },
+  "wheel_right": {
+   "group": "wheel",
+   "name": "Wheel",
+   "desc": "65 mm wheel, rubber tyre on a plastic hub",
+   "centre": [
+    0.0,
+    0.03365,
+    0.05745
+   ],
+   "size": [
+    0.06724,
+    0.06725,
+    0.0195
+   ],
+   "pieces": 2
+  }
+ }
+}

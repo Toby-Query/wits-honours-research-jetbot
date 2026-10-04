@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JetBot twin</title>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js" } }
+</script>
+<style>
+:root {
+  --bg: #f4f5f3; --panel: #ffffffee; --ink: #16181a; --muted: #62686e;
+  --line: #d9dcd8; --accent: #2a78d6; --accent-2: #eb6834; --series-3: #1baf7a; --good: #2c8a4b;
+  --warn: #b7791f; --bad: #c8372d; --chip: #eceeea; --floor: #e9ebe7;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121416; --panel: #1b1e21ee; --ink: #e9ebec; --muted: #9aa1a7;
+    --line: #2d3236; --accent: #3987e5; --accent-2: #d95926; --series-3: #199e70; --good: #5bbf7a;
+    --warn: #e0b04f; --bad: #ff6f61; --chip: #24282c; --floor: #1a1d20;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  overflow: hidden; }
+canvas#view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+header { position: fixed; top: 0; left: 0; right: 0; height: 40px; display: flex;
+  align-items: center; gap: 10px; padding: 0 14px; background: var(--panel);
+  border-bottom: 1px solid var(--line); backdrop-filter: blur(8px); z-index: 5; }
+header h1 { font-size: 14px; font-weight: 650; margin: 0 6px 0 0; letter-spacing: .01em; }
+.chip { font: 11px var(--mono); padding: 2px 8px; border-radius: 999px;
+  background: var(--chip); color: var(--muted); white-space: nowrap; }
+.chip.bad { background: var(--bad); color: #fff; }
+.chip.warn { background: var(--warn); color: #fff; }
+.spacer { flex: 1; }
+.panel { position: fixed; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 10px; backdrop-filter: blur(8px); z-index: 4; }
+#left { top: 52px; left: 12px; width: 232px; padding: 12px; max-height: calc(100% - 250px);
+  overflow-y: auto; }
+#right { top: 52px; right: 12px; width: 372px; bottom: 196px; display: flex;
+  flex-direction: column; }
+#charts { left: 12px; right: 12px; bottom: 12px; height: 172px; display: grid;
+  grid-template-columns: repeat(3, 1fr); gap: 0; }
+#charts > div { padding: 8px 12px 6px; border-right: 1px solid var(--line); min-width: 0; }
+#charts > div:last-child { border-right: 0; }
+#charts h3 { margin: 0 0 2px; }
+#charts canvas { width: 100%; height: 132px; display: block; }
+h3 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--muted); margin: 14px 0 6px; }
+h3:first-child { margin-top: 0; }
+label.row { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+label.row span { flex: 1; }
+button, select, input[type=number] { font: inherit; color: var(--ink);
+  background: var(--chip); border: 1px solid var(--line); border-radius: 6px;
+  padding: 4px 9px; }
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+select { width: 100%; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.keys { display: grid; grid-template-columns: repeat(3, 34px); gap: 4px;
+  justify-content: center; margin: 8px 0; }
+.keys b { display: grid; place-items: center; height: 30px; border-radius: 6px;
+  background: var(--chip); border: 1px solid var(--line); font: 600 12px var(--mono); }
+.keys b.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.hint { color: var(--muted); font-size: 11.5px; }
+.tabs { display: flex; border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; border: 0; border-radius: 0; background: none; padding: 9px 4px;
+  color: var(--muted); border-bottom: 2px solid transparent; }
+.tabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.tab { flex: 1; overflow-y: auto; padding: 10px 12px; display: none; }
+.tab.on { display: block; }
+svg#board { width: 100%; height: auto; display: block; }
+svg#board .node rect { fill: var(--chip); stroke: var(--line); stroke-width: 1; rx: 6; }
+svg#board .node.warn rect { stroke: var(--warn); stroke-width: 2; }
+svg#board .node.bad rect { stroke: var(--bad); stroke-width: 2; }
+svg#board .node.off rect { opacity: .45; }
+svg#board text { fill: var(--ink); font-size: 10.5px; }
+svg#board text.t { font-weight: 650; font-size: 10.5px; }
+svg#board text.v { font-family: var(--mono); font-size: 10px; fill: var(--muted); }
+svg#board path.wire { fill: none; stroke: var(--line); stroke-width: 2; }
+svg#board path.flow { fill: none; stroke: var(--accent); stroke-width: 2;
+  stroke-dasharray: 4 6; stroke-linecap: round; }
+svg#board text.rail { font: 9.5px var(--mono); fill: var(--muted); }
+table { width: 100%; border-collapse: collapse; }
+td { padding: 3px 0; vertical-align: top; }
+td.n { font-family: var(--mono); font-size: 11px; text-align: right; white-space: nowrap;
+  padding-left: 8px; }
+tr.bad td:first-child { color: var(--bad); font-weight: 600; }
+tr.warn td:first-child { color: var(--warn); font-weight: 600; }
+.bar { height: 4px; border-radius: 2px; background: var(--chip); overflow: hidden; margin-top: 3px; }
+.bar i { display: block; height: 100%; background: var(--good); }
+tr.warn .bar i { background: var(--warn); } tr.bad .bar i { background: var(--bad); }
+.tun { margin-bottom: 9px; }
+.tun .top { display: flex; justify-content: space-between; gap: 6px; }
+.tun .top code { font: 11px var(--mono); }
+.tun .src { color: var(--muted); font-size: 10.5px; line-height: 1.3; }
+.tun input[type=number] { width: 82px; padding: 1px 5px; font: 11px var(--mono); }
+#info { left: 256px; top: 52px; width: 250px; padding: 10px 12px; display: none; }
+#info b { display: block; font-size: 13px; }
+#cam { position: fixed; left: 256px; bottom: 196px; width: 240px; height: 150px;
+  border: 1px solid var(--line); border-radius: 8px; pointer-events: none; z-index: 3; }
+#cam span { position: absolute; left: 7px; top: 5px; font: 10px var(--mono);
+  color: #fff; text-shadow: 0 0 3px #000; }
+#err { position: fixed; top: 48px; left: 50%; transform: translateX(-50%);
+  background: var(--bad); color: #fff; padding: 6px 12px; border-radius: 6px;
+  display: none; z-index: 9; }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<header>
+  <h1>JetBot twin</h1>
+  <span class="chip" id="c-board">–</span>
+  <span class="chip" id="c-time">t 0.0 s</span>
+  <span class="chip" id="c-pose">–</span>
+  <span class="chip" id="c-state">–</span>
+  <span class="spacer"></span>
+  <span class="chip" id="c-limits">ratings ok</span>
+</header>
+<div id="err"></div>
+
+<div class="panel" id="left">
+  <h3>Drive</h3>
+  <div class="keys"><i></i><b id="k-w">W</b><i></i><b id="k-a">A</b><b id="k-s">S</b><b id="k-d">D</b></div>
+  <label class="row"><span>command</span><b id="cmd-val" style="font:12px var(--mono)">0.30</b></label>
+  <input type="range" id="cmd" min="0.05" max="1" step="0.05" value="0.3">
+  <div class="hint">Hold W A S D or the arrows. The number is what would be passed to
+    <code>robot.set_motors()</code>.</div>
+  <label class="row" style="margin-top:8px"><button id="reset">Reset</button>
+    <button id="follow">Follow: on</button></label>
+
+  <h3>Situation</h3>
+  <label class="row"><input type="checkbox" id="f-lifted"><span>wheels off the ground</span></label>
+  <label class="row"><input type="checkbox" id="f-held"><span>wheels held (stall)</span></label>
+  <label class="row"><input type="checkbox" id="f-charger"><span>charger plugged in</span></label>
+  <label class="row"><span>Jetson</span>
+    <select id="f-jetson" style="width:128px">
+      <option value="idle">idle</option><option value="teleop">streaming</option>
+      <option value="inference">inference</option><option value="max">flat out</option>
+    </select></label>
+  <label class="row"><span>charge</span>
+    <select id="soc" style="width:128px">
+      <option value="1">100 %</option><option value="0.5">50 %</option>
+      <option value="0.15">15 %</option><option value="0.05">5 %</option>
+    </select></label>
+  <label class="row"><span>driver chip</span>
+    <select id="board-sel" style="width:128px">
+      <option value="drv8870">2 × DRV8870</option><option value="tb6612">TB6612FNG</option>
+    </select></label>
+  <label class="row"><span>fault</span>
+    <select id="fault" style="width:128px">
+      <option value="">none</option>
+      <option value="drive_left,open">left motor unplugged</option>
+      <option value="drive_right,open">right motor unplugged</option>
+      <option value="holder,open">a cell falls out</option>
+      <option value="S1,open">switch off</option>
+    </select></label>
+
+  <h3>Run an experiment</h3>
+  <select id="exp"></select>
+  <div class="hint" id="exp-doc" style="margin-top:5px"></div>
+  <label class="row"><button class="primary" id="exp-run">Run on the twin</button></label>
+
+  <h3>View</h3>
+  <label class="row"><span>explode</span></label>
+  <input type="range" id="explode" min="0" max="1" step="0.01" value="0">
+</div>
+
+<div class="panel" id="info"></div>
+<div id="cam"><span>onboard camera (rectilinear stand-in for the 160° lens)</span></div>
+
+<div class="panel" id="right">
+  <div class="tabs">
+    <button data-tab="t-board" class="on">Board</button>
+    <button data-tab="t-limits">Ratings</button>
+    <button data-tab="t-tune">Unknowns</button>
+  </div>
+  <div class="tab on" id="t-board"><svg id="board" viewBox="0 0 348 470"></svg>
+    <div class="hint" id="board-note" style="margin-top:6px"></div></div>
+  <div class="tab" id="t-limits"><div class="hint" style="margin-bottom:8px">Every rating the
+    board's parts declare, worst first. The bar is how much of the rating is in use.</div>
+    <table id="limits"></table></div>
+  <div class="tab" id="t-tune"><div class="hint" style="margin-bottom:10px">These numbers have
+    not been measured on the real robot. Move one and the whole twin is rebuilt around it.</div>
+    <div id="tun"></div><button id="defaults">Back to hardware.py</button></div>
+</div>
+
+<div class="panel" id="charts">
+  <div><h3>Bus voltage, V <span class="hint" style="text-transform:none;letter-spacing:0">— what the INA219 reports</span></h3><canvas id="ch-v"></canvas></div>
+  <div><h3>Current, A</h3><canvas id="ch-i"></canvas></div>
+  <div><h3>Speed, m/s <span class="hint" style="text-transform:none;letter-spacing:0">— tyres ahead of the robot means slip</span></h3><canvas id="ch-m"></canvas></div>
+</div>
+<script type="module" src="./twin.js"></script>
+</body>
+</html>

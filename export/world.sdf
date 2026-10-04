@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <world name="jetbot_world">
+    <physics name="1ms" type="ignored"><max_step_size>0.001</max_step_size><real_time_factor>1</real_time_factor></physics>
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <light type="directional" name="sun"><cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose><direction>-0.5 0.1 -0.9</direction></light>
+    <model name="floor"><static>true</static><link name="l">
+      <collision name="c"><geometry><plane><normal>0 0 1</normal><size>20 20</size></plane></geometry></collision>
+      <visual name="v"><geometry><plane><normal>0 0 1</normal><size>20 20</size></plane></geometry>
+        <material><diffuse>0.85 0.85 0.83 1</diffuse></material></visual>
+    </link></model>
+    <include><uri>jetbot.sdf</uri></include>
+  </world>
+</sdf>

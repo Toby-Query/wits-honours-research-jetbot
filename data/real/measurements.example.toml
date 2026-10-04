@@ -1,0 +1,28 @@
+# What you measured by hand, one table per experiment.
+# Copy this to data/real/<session>/measurements.toml and fill it in.
+# Leave out anything you did not measure. Lengths in metres, angles in degrees.
+
+[wheels_up_sweep]
+# Wheel turns during each hold, INCLUDING the run-down after the command
+# stops. One number per command, in order:
+#          0.10  0.15  0.20  0.25  0.30  0.40  0.50  0.60  0.80  1.00
+turns_l = [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+turns_r = [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
+
+[straight]
+distance_m = 0.0        # start line to where it stopped
+coast_m = 0.0           # of that, how far it rolled after the motors cut
+drift_m = 0.0           # sideways; positive is to the robot's left
+heading_deg = 0.0       # positive is counter-clockwise seen from above
+
+[spin]
+rotation_deg = 0.0      # total; 2.5 turns is 900
+wander_m = 0.0          # how far the middle of the axle ended from its start
+
+[step_response]
+offset_m = 0.0          # positive is ahead of the start
+
+[square]
+final_x_m = 0.0         # ahead of the start
+final_y_m = 0.0         # to the left of the start
+final_heading_deg = 0.0 # 0..360, counter-clockwise from the starting heading

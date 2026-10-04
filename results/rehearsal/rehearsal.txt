@@ -1,0 +1,32 @@
+REHEARSAL. The 'robot' below is a second twin with altered numbers,
+noisy sensors and a rounding tape measure. None of this is data from
+the real JetBot; it shows that the procedure recovers known answers.
+
+before: the twin misses the end of the square by 46 cm and +85 degrees
+
+pack: misfit 109.3 -> 0.0 over 1 numbers
+    cell_r0              0.06 -> 0.08456
+-- supposing the driver is the drv8870
+free: misfit 1035.1 -> 2.8 over 30 numbers
+    motor_rpm_noload     240 -> 211.7
+    motor_i_noload       0.16 -> 0.2241
+-- supposing the driver is the tb6612
+free: misfit 512.4 -> 342.9 over 30 numbers
+    motor_rpm_noload     240 -> 226.1
+    motor_i_noload       0.16 -> 0.2642
+driver chip: drv8870 (misfit 2.8 against 342.9 for the tb6612)
+stall: misfit 0.3 -> 0.0 over 1 numbers
+    motor_r              4 -> 5.097
+floor: misfit 338.0 -> 0.1 over 8 numbers
+    gear_eff             0.65 -> 0.5603
+    mu_caster            0.25 -> 0.3258
+
+after:  it misses by 4 cm and -6 degrees (the square was not used in the fit)
+
+recovered against the stand-in's true values
+  cell_r0              fitted 0.08456   true 0.085   (-1 %)
+  motor_rpm_noload     fitted 211.7   true 205   (+3 %)
+  motor_i_noload       fitted 0.2241   true 0.21   (+7 %)
+  motor_r              fitted 5.097   true 5.1   (-0 %)
+  gear_eff             fitted 0.5603   true 0.55   (+2 %)
+  mu_caster            fitted 0.3258   true 0.36   (-9 %)

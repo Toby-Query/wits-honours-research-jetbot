@@ -1,0 +1,84 @@
+[
+ {
+  "names": [
+   "cell_r0"
+  ],
+  "before": [
+   0.06
+  ],
+  "after": [
+   0.08455889286302509
+  ],
+  "cost_before": 109.33003429272016,
+  "cost_after": 6.0103728400247366e-06,
+  "n_residuals": 1,
+  "evaluations": 5,
+  "at_bound": [],
+  "stage": "pack"
+ },
+ {
+  "stage": "driver chip",
+  "picked": "drv8870",
+  "cost": {
+   "drv8870": 2.7603645451830294,
+   "tb6612": 342.86784057354043
+  }
+ },
+ {
+  "names": [
+   "motor_rpm_noload",
+   "motor_i_noload"
+  ],
+  "before": [
+   240.0,
+   0.16
+  ],
+  "after": [
+   211.6700581201027,
+   0.22412270072449983
+  ],
+  "cost_before": 1035.0766892208283,
+  "cost_after": 2.7603645451830294,
+  "n_residuals": 30,
+  "evaluations": 5,
+  "at_bound": [],
+  "stage": "free"
+ },
+ {
+  "names": [
+   "motor_r"
+  ],
+  "before": [
+   4.0
+  ],
+  "after": [
+   5.097492309472255
+  ],
+  "cost_before": 0.28110523098953616,
+  "cost_after": 0.0001577197716170668,
+  "n_residuals": 1,
+  "evaluations": 7,
+  "at_bound": [],
+  "stage": "stall"
+ },
+ {
+  "names": [
+   "gear_eff",
+   "mu_caster"
+  ],
+  "before": [
+   0.65,
+   0.25
+  ],
+  "after": [
+   0.5602867206482269,
+   0.32581511642719674
+  ],
+  "cost_before": 338.0039744300069,
+  "cost_after": 0.10405777230181666,
+  "n_residuals": 8,
+  "evaluations": 6,
+  "at_bound": [],
+  "stage": "floor"
+ }
+]
