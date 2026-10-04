@@ -1,0 +1,15 @@
+{
+ "video": "data/real/2026-10-04/square.mp4",
+ "fps": 30.000189634574177,
+ "run_starts_at_s": 39.5330834386852,
+ "run_lasts_s": 13.166583438685208,
+ "final_x_m": 0.8133789258738389,
+ "final_y_m": 0.2041247998427281,
+ "final_heading_deg": 37.32279302648499,
+ "total_rotation_deg": 397.322793026485,
+ "path_length_m": 3.37127053091327,
+ "furthest_ahead_m": 0.9530090664731451,
+ "furthest_left_m": 0.6666519173846541,
+ "frames_without_a_reading": 0,
+ "position_scatter_at_rest_mm": 6.97256383816325
+}

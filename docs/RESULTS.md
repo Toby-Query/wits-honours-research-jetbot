@@ -11,8 +11,8 @@ python -m jetbot_twin --calibrated compare --session 2026-10-04
 ```
 
 **Done so far:** the two stationary experiments, the driver-chip test, the
-wheels-up sweep, the stall, and the straight run and spin on the floor.
-**Not yet:** the held-out square.
+wheels-up sweep, the stall, the straight run and spin on the floor, and the
+held-out square.
 
 ## What the probe found
 
@@ -274,14 +274,63 @@ no term for.
 
 ## Experiment 7: the square (held out)
 
-Not yet run. The twin's prediction, with everything above fitted and the
-square itself used for nothing, is in
-[prediction_square.json](../results/2026-10-04/prediction_square.json): a
-0.71 m square, four quarter-turns to the left, ending within a centimetre of
-its start and facing the way it began. That is what a model with identical
-motors and no tile joints predicts. The straight run drifted 5–10 cm and
-turned about 10° in 1.4 m, so the real robot will not close the square; by
-how much is the result.
+Nothing was fitted to this. Four sides at 0.5 for 1.0 s, each followed by a
+left turn at ∓0.3 for 0.29 s, which is a quarter-turn in the calibrated twin.
+Filmed from above; `tools/path_video.py` uses the 50 cm tile joints as its
+ruler and traces the robot as a shape against the floor.
+
+![The robot's path and the twin's](img/real_square.png)
+
+| | Twin | Robot |
+|---|---|---|
+| The four sides | 0.69, 0.71, 0.71, 0.69 m | 0.70, 0.72, 0.69, 0.69 m |
+| Peak speed on a side | 0.76 m/s | 0.81–0.85 m/s |
+| The corners | 85°, 89°, 94° | 78°, 116°, 133° |
+| Ends this far from its start | 0.10 m | 0.84 m |
+
+**The twin got the straights and missed the turns.** Every side is within
+3 cm. The corners are out by 7°, 27° and 39°, and that is the whole of the
+0.8 m by which the twin's end point misses.
+
+The twin is the model replayed on the timings the robot actually achieved
+(the turns ran 0.285, 0.293 and 0.311 s, not 0.290: writing a command over
+I²C takes about 30 ms). That accounts for the twin's own corners differing,
+85° to 94°. It does not account for the robot's, which differ four times as
+much.
+
+**Why the turns, when the spin was right to 6 %?** The spin ran for two
+seconds, nearly all of it at a steady rate, and steady rates are what the twin
+was calibrated on. A 0.29 s turn from rest never reaches a steady rate: it is
+all breakaway and spin-up, on a tiled floor, with two wheels that are not
+identical. The twin has one breakaway friction figure, the same for both
+wheels, which nobody has measured (`motor_friction_static_ratio` is still an
+assumption), and no floor texture. That the robot's corners grow through the
+run, 78° then 116° then 133°, says it is not just scatter; I do not know what
+is growing.
+
+**What would settle it.** Ten repeats of the 0.29 s turn alone, filmed close
+from above and measured with `tools/spin_video.py`: the spread says how
+repeatable a short turn is on this floor, and the mean against the twin's 90°
+says whether the twin is biased or merely blind to something random. If the
+spread is as wide as these three corners, no model will predict a single
+open-loop square on this robot, and the honest claim for the twin is the
+distribution, not the path.
+
+**A correction made on the way.** As first defined, the square's corners were
+0.3 s at ∓0.5, which the twin showed to be nearer a half-turn: the robot would
+have shuttled back and forth. The corners were retimed to a quarter-turn
+before the run. The first attempt at the run was also discarded: the agent
+timed the motors and read the sensors in one loop, so a slow sensor read
+could stretch a turn. The motors now have their own clock, and the log
+records when each command was sent.
+
+**Tracking, again.** The first path this tool produced had one side 0.91 m
+long at an impossible 1.18 m/s. The floor grid had been allowed to follow the
+tile joints as the phone drifted, and one of them had walked onto the edge of
+a shadow. With the grid held to where joints can be, all four sides came out
+alike. The robot's heading from its outline is not reported: an outline is
+ambiguous by a half-turn and changes shape with perspective. The corners above
+come from the direction of travel along each side.
 
 ## What changed in the twin as a result
 
@@ -302,6 +351,6 @@ how much is the result.
 
 ## Still to do
 
-The held-out `square`, and `step_response`. Extra holds near full command, to look at the bend. And the hand
+Repeats of the short turn, to find out how repeatable it is. `step_response`. Extra holds near full command, to look at the bend. And the hand
 measurements: the robot's mass, the wheel's diameter, the cells'
 label.

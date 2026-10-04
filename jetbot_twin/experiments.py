@@ -119,6 +119,14 @@ EXPERIMENTS = {e.name: e for e in [
         "Whatever the twin predicts for where the robot ends up, after the "
         "other experiments have calibrated it, is the result to report.",
         measure=["final position x, y, m", "final heading, degrees"]),
+    Experiment(
+        "short_turns", [(1.5, 0, 0)] + [(0.29, -TURN, TURN), (1.2, 0, 0)] * 10,
+        "The square's corner on its own, ten times: 0.29 s to the left, then "
+        "a rest. Film from above, close. How much the ten differ is how "
+        "repeatable a short turn is on this floor.",
+        settles=["how repeatable a short turn is",
+                 "motor_friction_static_ratio (breakaway friction)"],
+        measure=["the angle turned in each of the ten"]),
 ]}
 
 JETSON_POWER = {"idle": "jetson_p_idle", "teleop": "jetson_p_teleop",
