@@ -1,0 +1,87 @@
+{
+ "video": "data/real/2026-10-04/wheels_up_sweep.mp4",
+ "offset_s": 2.2800000000000002,
+ "fps": 29.999228811598673,
+ "holds": [
+  {
+   "cmd": 0.1,
+   "rpm": 40.509906919623,
+   "wraps": 0,
+   "sound_rpm": 39.086218089268236,
+   "scatter_rpm": 31.863116244044082,
+   "sound_agrees": true
+  },
+  {
+   "cmd": 0.15,
+   "rpm": 68.49945202038121,
+   "wraps": 0,
+   "sound_rpm": 62.46701777793546,
+   "scatter_rpm": 2.834743515928323,
+   "sound_agrees": true
+  },
+  {
+   "cmd": 0.2,
+   "rpm": 93.78355096836954,
+   "wraps": 0,
+   "sound_rpm": 92.8420248521652,
+   "scatter_rpm": 6.606862155215603,
+   "sound_agrees": true
+  },
+  {
+   "cmd": 0.25,
+   "rpm": 119.66063561338304,
+   "wraps": 0,
+   "sound_rpm": 128.42635933977706,
+   "scatter_rpm": 50.177665223133,
+   "sound_agrees": true
+  },
+  {
+   "cmd": 0.3,
+   "rpm": 147.23759800300718,
+   "wraps": 0,
+   "sound_rpm": 156.4440862426463,
+   "scatter_rpm": 6.312613342351532,
+   "sound_agrees": true
+  },
+  {
+   "cmd": 0.4,
+   "rpm": 199.98107384465325,
+   "wraps": 0,
+   "sound_rpm": 214.73334498329484,
+   "scatter_rpm": 2.7715297716102683,
+   "sound_agrees": false
+  },
+  {
+   "cmd": 0.5,
+   "rpm": 252.13748545100702,
+   "wraps": 1,
+   "sound_rpm": 271.88098719688617,
+   "scatter_rpm": 3.1851330323492757,
+   "sound_agrees": false
+  },
+  {
+   "cmd": 0.6,
+   "rpm": 306.4924011893078,
+   "wraps": 1,
+   "sound_rpm": 322.8383130465909,
+   "scatter_rpm": 8.829222990543803,
+   "sound_agrees": true
+  },
+  {
+   "cmd": 0.8,
+   "rpm": 415.92052114696367,
+   "wraps": 1,
+   "sound_rpm": 425.38505860932804,
+   "scatter_rpm": 24.936117509083797,
+   "sound_agrees": true
+  },
+  {
+   "cmd": 1.0,
+   "rpm": 464.35076112956773,
+   "wraps": 2,
+   "sound_rpm": 487.6911697940196,
+   "scatter_rpm": 9.900325883859129,
+   "sound_agrees": true
+  }
+ ]
+}

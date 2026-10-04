@@ -1,0 +1,10 @@
+# Session 2026-10-04. Pack charged (12.35 V at rest), charger unplugged.
+
+[wheels_up_sweep]
+# Steady wheel speed in each hold, rpm, from the phone video
+# (wheels_up_sweep.mp4, 30 fps) by tools/wheel_video.py; see wheel_speed.json.
+# Read from the hub's eight holes, so each value is known modulo 225 rpm and
+# unwrapped on the assumption that speed rises with command. The soundtrack's
+# motor tone agrees with every one to within 8 %.
+#       0.10  0.15  0.20   0.25   0.30   0.40   0.50   0.60   0.80   1.00
+rpm = [40.5, 68.5, 93.8, 119.7, 147.2, 200.0, 252.1, 306.5, 415.9, 464.4]

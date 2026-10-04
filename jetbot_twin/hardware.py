@@ -105,11 +105,18 @@ class Hardware:
     # (Waveshare). Waveshare do not say at what voltage. The figures below are
     # for the common 6 V TT motor; if yours turn out to be 12 V units, ke
     # doubles and r roughly quadruples. This is the first thing to measure.
-    motor_v_rated: float = assumed(6.0, "typical TT motor; Waveshare do not state it")
-    motor_rpm_noload: float = datasheet(240.0, "Waveshare: idle speed 240 RPM")
-    motor_i_noload: float = assumed(0.16, "typical TT motor at 6 V")
-    motor_r: float = assumed(4.0, "6 V / 1.5 A stall, typical TT motor. Measure "
-                             "across the motor terminals with the wheel held")
+    # 2026-10-04, wheels-up sweep filmed and timed (docs/RESULTS.md): the
+    # measured speeds fit "240 rpm at 6 V" to within 0.2 %. So these ARE the
+    # ordinary 6 V motors, run from a 12 V pack.
+    motor_v_rated: float = measured(6.0, "wheels-up sweep 2026-10-04: 240 rpm at "
+                                    "6 V reproduces the measured speeds")
+    motor_rpm_noload: float = datasheet(240.0, "Waveshare: idle speed 240 RPM; "
+                                        "fitted value 240.5")
+    motor_i_noload: float = measured(0.237, "fitted to the bus sag in the wheels-up "
+                                     "sweep, 2026-10-04 (was assumed 0.16)")
+    motor_r: float = measured(3.45, "fitted to the bus sag with the wheels held, "
+                              "2026-10-04 (was assumed 4.0). Inferred through the "
+                              "pack resistance, not metered")
     motor_l: float = assumed(2.0e-3, "130-size motor wound for 6 V, estimate")
     gear: float = datasheet(48.0, "Waveshare: reduction 1:48")
     gear_eff: float = assumed(0.65, "three-stage spur gearbox, estimate")
@@ -145,7 +152,10 @@ class Hardware:
     # ----------------------------------------------------------------- battery
     cells: int = 3
     cell_capacity_ah: float = assumed(2.6, "the kit ships without cells; a common 18650")
-    cell_r0: float = assumed(0.060, "DC resistance of a 2.6 Ah 18650")
+    cell_r0: float = measured(0.0575, "Jetson load step on a charged pack, "
+                              "2026-10-04. It was 0.125 on a nearly flat pack: "
+                              "this number rises as the cells empty, and it "
+                              "includes whatever part of holder_r is not there")
     cell_r1: float = assumed(0.030, "slow polarisation")
     cell_c1: float = assumed(1500.0, "gives the sag a ~45 s tail")
     cell_i_max: float = assumed(5.2, "2C continuous")
@@ -186,7 +196,8 @@ class Hardware:
     # Jetson measures its own supply: header pins, carrier traces, the
     # carrier's input switch. The schematic shows none of it, and the twin
     # was built without it. See docs/RESULTS.md.
-    r_5v_path: float = assumed(0.0, "not on the schematic; zero until measured")
+    r_5v_path: float = measured(0.49, "Jetson load step, 2026-10-04: the Jetson's "
+                                "own reading of its supply against its own current")
 
     # ------------------------------------------------------------------ Jetson
     jetson_v_min: float = datasheet(4.75, "Jetson Nano dev kit: 5 V +/- 5 %")
@@ -194,7 +205,7 @@ class Hardware:
     jetson_i_header_max: float = datasheet(5.0, "J41 pins 2 and 4, 2.5 A each")
     # What the whole 5 V rail draws, by what the robot is doing. Read these
     # off the Jetson's own INA3221 (robot/agent.py logs it) and replace them.
-    jetson_p_idle: float = assumed(2.5, "desktop idle, Wi-Fi up, fan on, W")
+    jetson_p_idle: float = measured(1.15, "the Jetson's own monitor at rest, 2026-10-04")
     jetson_p_teleop: float = assumed(5.0, "camera streaming to a notebook, W")
     jetson_p_inference: float = assumed(7.5, "collision-avoidance model running, W")
     jetson_p_max: float = assumed(11.0, "MAXN, CPU and GPU loaded, peripherals, W")

@@ -187,7 +187,8 @@ def predict_manual(exp, log):
             t1 = t1 + 0.9                     # include the run-down
             tl.append((log.at("phi_l", t1) - log.at("phi_l", t0)) / (2 * math.pi))
             tr.append((log.at("phi_r", t1) - log.at("phi_r", t0)) / (2 * math.pi))
-        return {"turns_l": tl, "turns_r": tr}
+        rpm = [abs(log.at("wl", t1 - 0.05)) * 9.549 for t0, t1 in holds(exp)]
+        return {"turns_l": tl, "turns_r": tr, "rpm": rpm}
     if n == "step_response":
         return {"offset_m": log.final("x")}
     if n == "square":
@@ -199,5 +200,5 @@ def predict_manual(exp, log):
 # how well a careful person can measure each of those
 MANUAL_TOL = {"distance_m": 0.01, "drift_m": 0.01, "heading_deg": 3.0,
               "coast_m": 0.01, "rotation_deg": 10.0, "wander_m": 0.02, "turns_l": 0.25,
-              "turns_r": 0.25, "offset_m": 0.01, "final_x_m": 0.02,
+              "turns_r": 0.25, "rpm": 8.0, "offset_m": 0.01, "final_x_m": 0.02,
               "final_y_m": 0.02, "final_heading_deg": 5.0}
