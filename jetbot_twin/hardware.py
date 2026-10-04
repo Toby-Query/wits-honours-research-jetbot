@@ -205,7 +205,7 @@ class Hardware:
     cam_f_mm: float = datasheet(3.15, "IMX219-160")
     cam_fov_diag_deg: float = datasheet(160.0, "IMX219-160")
     cam_pixel_um: float = datasheet(1.12, "IMX219")
-    cam_pos: tuple = (0.0746, 0.0, 0.1077)           # lens centre with the mount level
+    cam_pos: tuple = (0.0746, 0.0, 0.0967)           # lens centre with the mount level
     cam_pitch_deg: float = assumed(
         0.0, "the mount is hinged (photographed 2026-10-04), so this is whatever "
         "it was last set to; Waveshare's CAD has a fixed bracket at -20 degrees. "

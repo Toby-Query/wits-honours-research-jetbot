@@ -28,6 +28,7 @@ camera.position.set(-0.45, 0.38, 0.55);
 const lookFrom = new URLSearchParams(location.search).get('view');   // ?view=front | side
 if (lookFrom === 'front') camera.position.set(0.30, 0.20, 0.26);
 if (lookFrom === 'side') camera.position.set(0.03, 0.11, 0.36);
+if (lookFrom === 'head-on') camera.position.set(0.42, 0.075, 0.0001);
 if (lookFrom === 'rear') { camera.position.set(-0.16, 0.20, 0.22); }
 const controls = new OrbitControls(camera, canvas);
 controls.target.set(0, 0.06, 0);

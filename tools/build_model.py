@@ -269,12 +269,33 @@ SHEET_X = 0.0415                     # its rear face. Waveshare's own two mount
                                      # hold is BEHIND the sheet, so the sheet
                                      # stands ahead of them, near the chassis front
 FOOT_BACK = 0.0325                   # how far back the foot reaches, under the screws
-PIVOT = (0.0480, 0.1080)             # the hinge screw, out on the arms
+# Heights are from the level front-on photograph (2026-10-04), scaled on the
+# 25 mm camera board: the board's lower edge is 6 mm above the Jetson carrier
+# and 33 mm above the chassis top. An earlier side photograph, taken looking
+# down, had made all of this look 11 mm higher than it is.
+PIVOT = (0.0480, 0.0950)             # the hinge screw, out on the arms
 ARM_R = 0.0042                       # the arms are short rounded tabs this big
+ARM_Z = 0.01475                      # ... standing just outside the camera board
 PLATE_GAP = 0.0060                   # pivot to the back of the tilting plate
-BOARD_AT = (PIVOT[0] + PLATE_GAP + 0.002 + 0.003 + 0.0005, PIVOT[1] + 0.003)
-WIDTH = 0.024                        # of the sheet, across the robot
-FOOT_WIDTH = 0.038                   # the base is wider, to take the screws
+BOARD_AT = (PIVOT[0] + PLATE_GAP + 0.002 + 0.003 + 0.0005, PIVOT[1] + 0.005)
+NECK, BASE, HEAD = 0.025, 0.034, 0.031   # the sheet's width: under the camera,
+                                         # at the chassis, and across the arms
+FLARE = 0.017                        # the bottom this much of it curves outward
+FOOT_WIDTH = 0.038                   # the foot is wider again, to take the screws
+
+
+def sheet_width(y, top):
+    """How wide the sheet is at height y: flared at the base in a concave
+    curve, straight through the neck, wider again where the arms fold off."""
+    up = y - CHASSIS_TOP
+    if up < FLARE:
+        return NECK + (BASE - NECK) * (1 - up / FLARE) ** 2
+    head = top - 2 * ARM_R - 0.001              # where the arms begin
+    if y > head:
+        return HEAD
+    if y > head - 0.004:
+        return NECK + (HEAD - NECK) * (y - (head - 0.004)) / 0.004
+    return NECK
 
 
 def tilting_parts(pitch):
@@ -284,35 +305,54 @@ def tilting_parts(pitch):
     plate_x = px + PLATE_GAP + 0.001
     tilt[GREEN].append(box((0.002, 0.027, 0.027), (plate_x, BOARD_AT[1], 0.0)))
     tilt[SPACER].append(box((0.003, 0.027, 0.027), (plate_x + 0.0025, BOARD_AT[1], 0.0)))
-    for z in (-WIDTH / 2 + 0.0030, WIDTH / 2 - 0.0030):     # ears, inside the arms
+    for z in (-ARM_Z + 0.0017, ARM_Z - 0.0017):             # ears, inside the arms
         tilt[GREEN].append(box((PLATE_GAP, 2 * ARM_R, 0.0015), (px + PLATE_GAP / 2, py, z)))
         tilt[GREEN].append(barrel(ARM_R, 0.0015, (px, py, z)))
     return {c: [(rot_z(v, PIVOT, pitch), f) for v, f in lst] for c, lst in tilt.items()}
 
 
 def hinged_mount(pitch):
-    """The mount, as ({colour: [(vertices, faces), ...]}, fixed boxes)."""
+    """The mount: ({colour: [(vertices, faces), ...]}, its fixed boxes by role)."""
     px, py = PIVOT
     out = {SPACER: [], GREEN: [], BLACK: []}
     # --- fixed: ONE FLAT SHEET, standing on edge and facing forward. From the
-    #     side it is a line. At the bottom it bends BACK into a foot that
-    #     rests on the chassis, with the two screws through that foot, behind
-    #     the sheet. At the top its two edges fold FORWARD into short rounded
-    #     arms, and the pivot screw goes through those.
+    #     side it is a line; from the front it is waisted, flaring to the base.
+    #     At the bottom it bends BACK into a foot that rests on the chassis,
+    #     with the two screws through that foot, behind the sheet. At the top
+    #     its two edges fold FORWARD into short rounded arms for the pivot.
     top = py + ARM_R
-    h = top - CHASSIS_TOP
-    out[GREEN].append(box((SHEET, h, WIDTH), (SHEET_X + SHEET / 2, CHASSIS_TOP + h / 2, 0.0)))
-    out[GREEN].append(box((SHEET_X + SHEET - FOOT_BACK, 0.0015, FOOT_WIDTH),
-                          ((FOOT_BACK + SHEET_X + SHEET) / 2, CHASSIS_TOP + 0.00075, 0.0)))
+    sheet = []
+    n = int(round((top - CHASSIS_TOP) / 0.0005))
+    edges = np.linspace(CHASSIS_TOP, top, n + 1)
+    for y0, y1 in zip(edges[:-1], edges[1:]):                 # half-millimetre slices
+        sheet.append(box((SHEET, y1 - y0, sheet_width((y0 + y1) / 2, top)),
+                         (SHEET_X + SHEET / 2, (y0 + y1) / 2, 0.0)))
+    foot = box((SHEET_X + SHEET - FOOT_BACK, 0.0015, FOOT_WIDTH),
+               ((FOOT_BACK + SHEET_X + SHEET) / 2, CHASSIS_TOP + 0.00075, 0.0))
+    arms = []
     reach = px - (SHEET_X + SHEET)
-    for z in (-WIDTH / 2 + 0.00075, WIDTH / 2 - 0.00075):
-        out[GREEN].append(box((reach, 2 * ARM_R, 0.0015), (SHEET_X + SHEET + reach / 2, py, z)))
+    for z in (-ARM_Z, ARM_Z):
+        arms.append(box((reach, 2 * ARM_R, 0.0015), (SHEET_X + SHEET + reach / 2, py, z)))
         out[GREEN].append(barrel(ARM_R, 0.0015, (px, py, z)))        # the rounded end
         out[BLACK].append(barrel(0.0026, 0.0022, (px, py, z + np.sign(z) * 0.0018)))
-    fixed = [v for v, f in out[GREEN] if len(v) == 8]
+    out[GREEN] += sheet + [foot] + arms
+    fixed = {"sheet": [v for v, f in sheet], "foot": foot[0], "arms": [v for v, f in arms]}
     for colour, lst in tilting_parts(pitch).items():
         out[colour] += lst
     return out, fixed
+
+
+def sheet_blocks(fixed, per=8):
+    """The sheet's slices gathered into taller blocks, for clash testing."""
+    out = []
+    sl = fixed["sheet"]
+    for k in range(0, len(sl), per):
+        g = np.vstack(sl[k:k + per])
+        half = min(b[:, 2].max() for b in sl[k:k + per])
+        out.append(np.array([[x, y, z] for x in (g[:, 0].min(), g[:, 0].max())
+                             for y in (g[:, 1].min(), g[:, 1].max())
+                             for z in (-half, half)]))
+    return out
 
 
 def box_samples(corners, n=5):
@@ -325,12 +365,14 @@ def box_samples(corners, n=5):
 
 def tilt_range(fixed, place_at, cam_points):
     """Through what angles can the camera turn before it touches the mount?"""
+    solid_boxes = sheet_blocks(fixed) + [fixed["foot"]] + fixed["arms"]
+
     def clear(pitch):
         pts = [box_samples(v) for lst in tilting_parts(pitch).values()
                for v, f in lst if len(v) == 8]
         pts.append(place_at(cam_points, pitch))
         pts = np.vstack(pts)
-        return not any(inside_box(pts, b, 0.0002).any() for b in fixed)
+        return not any(inside_box(pts, b, 0.0002).any() for b in solid_boxes)
     lo = hi = 0
     while lo > -90 and clear(lo - 5):
         lo -= 5
@@ -398,6 +440,9 @@ def check(parts, mount, fixed, cable, cam_end, place_camera, cam_cad, cells=()):
         return np.vstack([np.vstack(vs) for vs, _ in parts[node]["by_colour"].values()])
 
     boxes = [v for lst in mount.values() for v, f in lst if len(v) == 8]
+    # the sheet is built in half-millimetre slices, too thin to test one by
+    # one: test it as the 4 mm blocks they add up to
+    boxes = [b for b in boxes if (b[:, 1].max() - b[:, 1].min()) > 0.0008] + sheet_blocks(fixed)
     solid = [n for n in parts if parts[n]["group"] not in
              ("camera_mount", "camera", "fastener")]
     print("geometry checks")
@@ -412,14 +457,15 @@ def check(parts, mount, fixed, cable, cam_end, place_camera, cam_cad, cells=()):
     cam = np.vstack([np.vstack(vs) for c, (vs, _) in parts["camera"]["by_colour"].items()
                      if c != "#d8d4c4"])
     screws = np.abs(np.abs(cam[:, 2]) - 0.0105) < 0.0025        # the four M1.6
-    n = sum(int(inside_box(cam[~screws], b).sum()) for b in fixed)
+    fixed_all = sheet_blocks(fixed) + [fixed["foot"]] + fixed["arms"]
+    n = sum(int(inside_box(cam[~screws], b).sum()) for b in fixed_all)
     report(n == 0, "the camera clears the upright at this tilt", f"{n} points inside" if n else "")
 
     ok0, t_lo, t_hi = tilt_range(fixed, place_camera, cam_cad)
     report(ok0 and t_lo <= -20 and t_hi >= 20,
            "the camera can tilt at least 20 degrees each way on its hinge",
            f"it turns freely from {t_lo:+d} to {t_hi:+d} degrees")
-    arm = max((b[:, 1].max() - b[:, 1].min()) for b in fixed[2:])
+    arm = max((b[:, 1].max() - b[:, 1].min()) for b in fixed["arms"])
     report(arm <= 0.010, "the arms are short tabs, not tall slabs", f"{arm * 1e3:.1f} mm tall")
     behind = [np.vstack(vs) for c, (vs, _) in parts["camera_mount"]["by_colour"].items()
               if c == "#9aa0a6"]
@@ -428,10 +474,21 @@ def check(parts, mount, fixed, cable, cam_end, place_camera, cam_cad, cells=()):
            f"screws reach x = {behind[0][:, 0].max() * 1e3:.1f} mm, sheet's rear face is at "
            f"{SHEET_X * 1e3:.1f} mm" if behind else "no mount screws found")
     lo = min(b[:, 0].min() for b in boxes)
-    thick = fixed[0][:, 0].max() - fixed[0][:, 0].min()
+    whole = np.vstack(fixed["sheet"])
+    thick = whole[:, 0].max() - whole[:, 0].min()
+    widths = [b[:, 2].max() - b[:, 2].min() for b in fixed["sheet"]]
+    waist = min(widths)
+    report(widths[0] > waist + 0.006 and widths[-1] > waist + 0.003,
+           "the sheet is waisted: wider at the base and across the arms",
+           f"{widths[0] * 1e3:.0f} mm at the base, {waist * 1e3:.0f} mm at the neck, "
+           f"{widths[-1] * 1e3:.0f} mm across the arms")
+    report(abs(BOARD_AT[1] - 0.0125 - 0.0823) < 0.008,
+           "the camera sits where the front photograph has it",
+           f"its lower edge is {(BOARD_AT[1] - 0.0125 - 0.0823) * 1e3:.1f} mm above the "
+           "Jetson board (photograph: about 6)")
     report(thick <= 0.0025, "the upright is a thin sheet, edge-on from the side",
            f"{thick * 1e3:.1f} mm thick")
-    sheet_lo = fixed[0][:, 0].min()
+    sheet_lo = whole[:, 0].min()
     report(sheet_lo > BOARDS_FRONT, "the upright is wholly ahead of the circuit boards",
            f"its rear face is at {sheet_lo * 1e3:.1f} mm, boards end at {BOARDS_FRONT * 1e3:.1f} mm")
     foot = min(b[:, 1].min() for b in boxes)
@@ -458,7 +515,7 @@ def check(parts, mount, fixed, cable, cam_end, place_camera, cam_cad, cells=()):
            f"furthest is {far * 1e3:.1f} mm from the board's centre")
     ms = [np.vstack(vs) for c, (vs, _) in parts["camera_mount"]["by_colour"].items()
           if c == "#9aa0a6"]
-    foot = fixed[1]
+    foot = fixed["foot"]
     ok = (bool(ms) and foot[:, 0].min() <= ms[0][:, 0].min() + 1e-4
           and ms[0][:, 0].max() <= foot[:, 0].max() + 1e-4
           and np.abs(ms[0][:, 2]).max() <= foot[:, 2].max() + 1e-4)
