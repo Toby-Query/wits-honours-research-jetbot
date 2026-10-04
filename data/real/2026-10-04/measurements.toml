@@ -28,3 +28,10 @@ heading_deg = 10.0
 # tools/spin_video.py: see spin_video.json. Counter-clockwise from above.
 rotation_deg = 1033.0
 wander_m = 0.01
+
+[short_turns]
+# Ten turns of -0.3 / +0.3 for 0.29 s from rest, pack at 11.71 V. From the
+# top-down video (short_turns.mp4, 30 fps) by the marker method of
+# tools/spin_video.py; see short_turns_video.json. The commands really lasted
+# 254 to 362 ms; the log has each one.
+each_turn_deg = [103.9, 91.5, 88.5, 78.2, 126.2, 86.2, 100.1, 60.4, 105.8, 85.8]

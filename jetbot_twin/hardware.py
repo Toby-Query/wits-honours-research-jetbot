@@ -93,6 +93,9 @@ class Hardware:
                  (-0.022, 0, 0.060), (0.10, 0.08, 0.06), "estimate", True),
     ])
     mass_override: float = None      # set this to the kitchen-scale reading, kg
+    # The inertia about the vertical axis is summed from the list above, most
+    # of whose masses are estimates. This multiplies it.
+    yaw_inertia_scale: float = assumed(1.0, "the parts list taken at face value")
 
     # ------------------------------------------------------------------ ground
     mu_tyre: float = assumed(0.8, "rubber tyre on a smooth hard floor")
@@ -269,7 +272,7 @@ class Hardware:
             a, b = i.size[0], i.size[1]
             J += i.mass * ((a * a + b * b) / 12.0
                            + (i.pos[0] - cx) ** 2 + (i.pos[1] - cy) ** 2)
-        return J * self._scale
+        return J * self._scale * self.yaw_inertia_scale
 
     # -- motor ------------------------------------------------------------------
     @property

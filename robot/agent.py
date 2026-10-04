@@ -113,8 +113,10 @@ def open_bus():
 class Pca9685(object):
     MODE1, MODE2, PRESCALE, LED0 = 0x00, 0x01, 0xFE, 0x06
 
-    def __init__(self, bus, addr=PCA_ADDR, freq=1600):
-        self.bus, self.addr = bus, addr
+    def __init__(self, bus, addr=PCA_ADDR, freq=1600, dry=False):
+        # dry: every write goes to channel 15's registers (0x42..0x45), which
+        # nothing is connected to. Same bus traffic, no motion: for timing.
+        self.bus, self.addr, self.dry, self.shadow = bus, addr, dry, {}
         self.set_all(0, 0)
         bus.write_byte_data(addr, self.MODE2, 0x04)          # totem pole
         bus.write_byte_data(addr, self.MODE1, 0x01)          # ALLCALL
@@ -140,9 +142,13 @@ class Pca9685(object):
     # set, and nothing here sets it: sent as a block, all four bytes pile
     # into the first register and the output never changes.
     def _write4(self, base, on, off):
+        # Only the bytes that changed are sent. A speed change touches two of
+        # the four, which halves the time the command takes to land.
         with BUS_LOCK:
             for k, v in enumerate((on & 0xFF, on >> 8, off & 0xFF, off >> 8)):
-                self.bus.write_byte_data(self.addr, base + k, v)
+                if self.shadow.get(base + k) != v or self.dry:
+                    self.bus.write_byte_data(self.addr, (0x42 + k) if self.dry else base + k, v)
+                    self.shadow[base + k] = v
 
     def set_pwm(self, ch, on, off):
         self._write4(self.LED0 + 4 * ch, on, off)
@@ -170,6 +176,39 @@ def write_motor(pca, side, value, alpha=1.0, beta=0.0):
     else:
         pca.set_pwm(hat["in1"], 0, 4096)
         pca.set_pwm(hat["in2"], 4096, 0)
+        pca.set_pwm(drv["in1"], 0, speed * 16)
+        pca.set_pwm(drv["in2"], 0, 0)
+
+
+def set_direction(pca, side, value, alpha=1.0, beta=0.0):
+    """The part of a motor command that does not by itself move anything on
+    the TB6612FNG: which way to turn. Sent ahead of time."""
+    mapped = int(255.0 * (alpha * value + beta))
+    hat = HAT[side]
+    if mapped < 0:
+        pca.set_pwm(hat["in2"], 0, 4096)
+        pca.set_pwm(hat["in1"], 4096, 0)
+    else:
+        pca.set_pwm(hat["in1"], 0, 4096)
+        pca.set_pwm(hat["in2"], 4096, 0)
+
+
+def set_power(pca, side, value, alpha=1.0, beta=0.0):
+    """The part that starts and stops the wheel: the PWM duty. Two bytes on
+    the TB6612FNG's channel. Then the DRV8870 channels, which on that board
+    are the ones that matter and on this one are not connected."""
+    mapped = int(255.0 * (alpha * value + beta))
+    speed = min(max(abs(mapped), 0), 255)
+    hat, drv = HAT[side], DRV[side]
+    pca.set_pwm(hat["pwm"], 0, speed * 16)
+    return mapped, speed, drv
+
+
+def set_drv(pca, mapped, speed, drv):
+    if mapped < 0:
+        pca.set_pwm(drv["in1"], 0, 0)
+        pca.set_pwm(drv["in2"], 0, speed * 16)
+    else:
         pca.set_pwm(drv["in1"], 0, speed * 16)
         pca.set_pwm(drv["in2"], 0, 0)
 
@@ -373,9 +412,9 @@ def probe():
 
 
 # ------------------------------------------------------------------------- run
-def run(exp, out_path, countdown):
+def run(exp, out_path, countdown, dry=False):
     bus = open_bus()
-    pca = Pca9685(bus)
+    pca = Pca9685(bus, dry=dry)
     addrs = scan(bus)
     ina = Ina219(bus) if INA_ADDR in addrs else None
     ads = Ads1115(bus) if ADS_ADDR in addrs else None
@@ -413,24 +452,46 @@ def run(exp, out_path, countdown):
     events = []                       # (seconds, left, right): when each command was sent
     state = {"cmd": (0.0, 0.0), "seg": 0, "done": False}
 
+    def wait_until(t0, when):
+        """Sleep to within 3 ms of `when`, then spin: sleep alone is good to
+        a few milliseconds on this kernel, and a turn is only 290 of them."""
+        while True:
+            left = when - (time.time() - t0)
+            if left <= 0:
+                return
+            if left > 0.004:
+                time.sleep(left - 0.003)
+
     def commander(t0):
         """Runs the profile on the clock and nothing else. The sensors are
         read on another thread: some take 30 ms, some 200, and a 0.29 s turn
-        cannot wait for them."""
-        t_end = 0.0
+        cannot wait for them.
+
+        A command is sent in two parts. The direction pins go first, a few
+        milliseconds early: they move nothing by themselves. Then, exactly
+        on time and with the bus already held, the two PWM duties, which are
+        what start and stop the wheels. The time logged is when those landed.
+        """
+        t_next = 0.0
         try:
             for k, (seconds, left, right) in enumerate(profile):
-                with BUS_LOCK:
-                    write_motor(pca, "left", left)
-                    write_motor(pca, "right", right)
-                events.append((time.time() - t0, left, right))
+                moving = bool(left or right)
+                if moving:                       # which way, ahead of time
+                    wait_until(t0, t_next - 0.012)
+                    with BUS_LOCK:
+                        set_direction(pca, "left", left)
+                        set_direction(pca, "right", right)
+                wait_until(t0, t_next - 0.004)
+                with BUS_LOCK:                   # hold the bus, then go on time
+                    wait_until(t0, t_next)
+                    l = set_power(pca, "left", left)
+                    r_ = set_power(pca, "right", right)
+                    events.append((time.time() - t0, left, right))
+                    set_drv(pca, *l)
+                    set_drv(pca, *r_)
                 state["cmd"], state["seg"] = (left, right), k
-                t_end += seconds
-                while True:
-                    left_to_go = t_end - (time.time() - t0)
-                    if left_to_go <= 0:
-                        break
-                    time.sleep(min(left_to_go, 0.005) if left_to_go < 0.02 else left_to_go - 0.01)
+                t_next += seconds
+            wait_until(t0, t_next)
         finally:
             with BUS_LOCK:
                 release(pca)
@@ -564,6 +625,9 @@ def main():
     r.add_argument("experiment", help="JSON file from the twin")
     r.add_argument("-o", "--out", default="log.csv")
     r.add_argument("--countdown", type=float, default=3)
+    r.add_argument("--dry", action="store_true",
+                   help="send every write to an unconnected channel: the bus "
+                        "is exercised and timed, the motors do not move")
     a = ap.parse_args()
     if a.cmd == "probe":
         probe()
@@ -574,7 +638,7 @@ def main():
         print("motors released")
     else:
         with open(a.experiment) as f:
-            run(json.load(f), a.out, a.countdown)
+            run(json.load(f), a.out, a.countdown, a.dry)
 
 
 if __name__ == "__main__":

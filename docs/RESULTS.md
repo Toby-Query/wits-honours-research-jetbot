@@ -363,18 +363,40 @@ ordinary use, not a quirk of this test.
 about 8 %, and the robot repeats itself to about ±11° even when the timing is
 accounted for.
 
-**The twin is too sluggish in a short turn.** The robot gains 505° of turn
-per extra second of command; the twin gains 358°. In the first third of a
-second the real robot is turning faster than the twin thinks. The 2 s spin,
-where the steady rate dominates, hid this. The likeliest cause is that the
-twin's inertia about the vertical axis is too large: it is a sum over an
-estimated parts list, not a measurement.
+**Is the twin too sluggish in a short turn? Not shown.** The robot gains
+505° of turn per extra second of command and the twin 358°, and I first read
+that as the twin's inertia about the vertical axis being too large. Two
+checks say otherwise. The slope rests on ten points, eight of them bunched
+within 35 ms of each other: its uncertainty is about ±125°/s, so 505 against
+358 is barely more than one standard error. And fitting the inertia directly
+(`yaw_inertia_scale`) ran it to its lower bound, a sixth of the estimate,
+while moving the twin's slope from 359 to 364°/s and leaving the scatter
+where it was. A parameter that hits its bound without explaining the data is
+the wrong parameter. The inertia is left as estimated. The 7° mean bias is
+about two standard errors: suggestive, no more.
 
 **What this says about the square.** Its corners were 78°, 116° and 133°
 against the twin's 85°, 89° and 94°. A spread of ±11° with a +7° bias covers
 the first of those and not the other two, so the square had something more
 going on than these in-place turns show: the robot arrives at each corner
 having just braked from 0.8 m/s, which these turns from rest do not test.
+
+## The command timing, afterwards
+
+The agent was reworked so that the writes which actually start and stop the
+wheels land on time: the direction pins are sent 12 ms early (they move
+nothing by themselves), the bus is taken 4 ms early, and only the bytes that
+changed are written. Timed on the robot with every write redirected to an
+unconnected channel, so that nothing moved:
+
+| | Asked | Before | After |
+|---|---|---|---|
+| Turn duration, 30 dry turns | 290 ms | 254 – 362 ms, sd about 29 | 253 – 305 ms, sd 9 |
+
+Three times tighter. A few turns in thirty are still 20–50 ms out. The likely
+cause is the status display, which shares the I²C bus: a refresh of it holds
+the bus for tens of milliseconds, and a motor command has to wait. That has
+not been confirmed; pausing the display's service during a run would test it.
 
 ## What changed in the twin as a result
 
@@ -395,7 +417,8 @@ having just braked from 0.8 m/s, which these turns from rest do not test.
 
 ## Still to do
 
-The robot's inertia about the vertical axis, which the short turns say is
-overestimated. Tighter command timing in the agent. `step_response`. Extra holds near full command, to look at the bend. And the hand
+More than ten short turns, with the timing now tighter, to see whether the
+7° bias is real. Whether the status display is what still delays commands.
+The square again. `step_response`. Extra holds near full command, to look at the bend. And the hand
 measurements: the robot's mass, the wheel's diameter, the cells'
 label.

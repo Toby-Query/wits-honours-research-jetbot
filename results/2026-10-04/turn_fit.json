@@ -1,0 +1,9 @@
+{
+ "yaw_only": {
+  "yaw_inertia_scale": 0.15008134265140072
+ },
+ "yaw_and_static": {
+  "yaw_inertia_scale": 0.15008134265140827,
+  "motor_friction_static_ratio": 1.4
+ }
+}

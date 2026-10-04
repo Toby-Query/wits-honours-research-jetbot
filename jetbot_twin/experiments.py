@@ -204,6 +204,16 @@ def predict_manual(exp, log):
         return {"turns_l": tl, "turns_r": tr, "rpm": rpm}
     if n == "step_response":
         return {"offset_m": log.final("x")}
+    if n == "short_turns":
+        th = [math.degrees(v) for v in log["th"]]
+        out, t = [], exp.profile[0][0]
+        for seconds, left, right in exp.profile[1:]:
+            if left < 0:
+                before = log.at("th", t - 0.05)
+                after = log.at("th", min(t + 0.95, log.t[-1]))
+                out.append(math.degrees(after - before))
+            t += seconds
+        return {"each_turn_deg": out}
     if n == "square":
         return {"final_x_m": log.final("x"), "final_y_m": log.final("y"),
                 "final_heading_deg": math.degrees(log.final("th")) % 360.0}
@@ -213,5 +223,5 @@ def predict_manual(exp, log):
 # how well a careful person can measure each of those
 MANUAL_TOL = {"distance_m": 0.01, "drift_m": 0.01, "heading_deg": 3.0,
               "coast_m": 0.01, "rotation_deg": 10.0, "wander_m": 0.02, "turns_l": 0.25,
-              "turns_r": 0.25, "rpm": 8.0, "offset_m": 0.01, "final_x_m": 0.02,
+              "turns_r": 0.25, "rpm": 8.0, "each_turn_deg": 5.0, "offset_m": 0.01, "final_x_m": 0.02,
               "final_y_m": 0.02, "final_heading_deg": 5.0}

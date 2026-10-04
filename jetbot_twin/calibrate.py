@@ -59,7 +59,7 @@ def residuals(hw, cases, dt=None, only=None):
     out = []
     for case in cases:
         twin_log, _ = replay(case.exp, case.real, hw, dt=dt)
-        if case.real is not None and "bus_v" in case.real:
+        if only != "manual" and case.real is not None and "bus_v" in case.real:
             a, b = sags(case.exp, case.real), sags(case.exp, twin_log)
             out += [(y - x) / BUS_NOISE for x, y in zip(a, b)]
             if case.exp.jetson == "stress":       # the load step itself
@@ -80,7 +80,8 @@ def residuals(hw, cases, dt=None, only=None):
                 out.append((twin_log.mean("v_5v", a, b)
                             - case.real.mean("v_5v", a, b)) / 0.005)
             return np.array(out, float)
-        pred = predict_manual(case.exp, twin_log)
+        from .compare import as_executed
+        pred = predict_manual(as_executed(case.exp, case.real), twin_log)
         for k, v in case.manual.items():
             if k not in pred:
                 continue
@@ -89,7 +90,8 @@ def residuals(hw, cases, dt=None, only=None):
                 out += [(p - r) / tol for p, r in zip(pred[k], v)]
             else:
                 out.append((pred[k] - v) / tol)
-    return np.array(out, float)
+    out = np.array(out, float)
+    return out[np.isfinite(out)]        # a hold too short to average gives none
 
 
 def fit(hw, names, cases, dt=None, verbose=False, only=None):
