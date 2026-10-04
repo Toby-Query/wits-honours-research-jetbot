@@ -442,6 +442,72 @@ caster that rolls freely at first and only starts to drag once it is being
 pushed sideways continuously would do it. That is a hypothesis; nothing here
 tests it directly. `hardware.py` is unchanged.
 
+## A confound, found late: tape on the left tyre
+
+A strip of tape put on the left tyre for the slow-motion wheel video stayed
+on, covering part of the tread, through every floor test above: the straight
+run, the spin, the first square and both sets of short turns. Their logs and
+videos are in `data/real/2026-10-04/tape_on/`. The straight run and the spin
+were repeated without it, and a square was run fresh.
+
+| | Tape on | Tape off | Twin for the tape-off run |
+|---|---|---|---|
+| Straight: distance | 1.43 m | 1.47 m | 1.45 m |
+| Straight: sideways drift | 5–10 cm to the left | more than 25 cm to the right | 0 |
+| Spin: rotation | 1033° | 1037° | 1043° |
+| Spin: steady rate | 504°/s | 529°/s | |
+
+**The tape barely touched distance or rotation**, so the floor-drag numbers
+fitted to the tape-on runs stand: with the tape off the twin is within 2 cm
+on the straight and 6° on the spin.
+
+**It changed the drift completely, and that exposes something real.** With
+the tape on, the robot veered a little left; without it, 25 cm right in
+1.47 m. If that path is an arc, its radius is about 4.4 m and the two wheels
+differ in speed by about 2.6 %. The tape had been slowing the left wheel
+enough to hide a right wheel that is the slower of the two. The twin's motors
+are identical, so it predicts no drift at all. One number would add it (the
+right motor about 2.6 % down on the left); it is not added yet because it
+rests on one run.
+
+## Experiment 10: a smaller square, tape off, timing tight
+
+Sides of 0.6 s instead of 1.0 s, to fit in a 2 × 2 block of tiles under a
+phone held still. Corners as before. Held out. All four turns lasted 285 to
+292 ms.
+
+![The small square: robot and twin](img/real_square_small.png)
+
+| | Twin | Robot |
+|---|---|---|
+| The four sides | 0.39, 0.40, 0.39, 0.40 m | 0.33, 0.39, 0.37, 0.39 m |
+| The corners | 88°, 85°, 88° | 113°, 112°, 75° |
+| Ends this far from its start | 0.07 m | 0.25 m |
+| Twin's end to robot's end | | 0.32 m |
+
+The same verdict as the larger square, now without the tape and without the
+timing error to blame: **the sides are right and the corners are not.**
+
+Putting the two squares' corners together, six of them: 78°, 116°, 133°,
+113°, 112°, 75°. Mean 105°, standard deviation 23°. The same turn made from
+rest, 24 times, gave 94° with a standard deviation of 8°. So a corner taken
+straight after a side is **three times as variable** as the same turn from a
+standstill, and probably larger on average. The command is identical; what
+differs is the state the robot is in when it arrives.
+
+What that state is, I have not established. The two candidates the twin has
+no model of are gearbox backlash (after driving forward both gear trains are
+loaded forward; a left turn asks the left one to reverse through its slack
+first, while the right one pushes at once) and whatever the robot is still
+doing 0.6 s after braking from 0.7 m/s. A turn after a longer pause, and a
+turn to the right as well as the left, would separate them.
+
+**What the twin can and cannot be used for, on this evidence.** It predicts
+how far the robot goes and how fast it turns in steady motion to a few
+percent, and it did so before being fitted to the floor. It does not predict
+where an open-loop path with short turns ends, and no setting of its present
+numbers would make it: the robot itself does not repeat those corners.
+
 ## What changed in the twin as a result
 
 | | Was | Now | From |
@@ -461,8 +527,9 @@ tests it directly. `hardware.py` is unchanged.
 
 ## Still to do
 
-A caster model whose drag depends on how long it has been sliding, to see
-whether one model can match both the short turns and the long spin. The
-square again, with the timing now tight. `step_response`. Extra holds near full command, to look at the bend. And the hand
+Why a corner after a side differs from the same turn from rest: turns after a
+longer pause, and to the right as well as the left. The left/right motor
+mismatch, from more than one straight run, added to the twin. The short turns
+repeated without the tape. `step_response`. Extra holds near full command, to look at the bend. And the hand
 measurements: the robot's mass, the wheel's diameter, the cells'
 label.

@@ -120,6 +120,13 @@ EXPERIMENTS = {e.name: e for e in [
         "other experiments have calibrated it, is the result to report.",
         measure=["final position x, y, m", "final heading, degrees"]),
     Experiment(
+        "square_small", [(1.0, 0, 0)] + [(0.6, FLOOR, FLOOR), (0.6, 0, 0),
+                                         (0.29, -TURN, TURN), (0.6, 0, 0)] * 4,
+        "The same open-loop square with shorter sides, about 0.4 m, to fit "
+        "inside a 2 x 2 block of 50 cm tiles with the phone held still above. "
+        "Held out, like the larger one.",
+        measure=["final position x, y, m", "final heading, degrees"]),
+    Experiment(
         "short_turns", [(1.5, 0, 0)] + [(0.29, -TURN, TURN), (1.2, 0, 0)] * 10,
         "The square's corner on its own, ten times: 0.29 s to the left, then "
         "a rest. Film from above, close. How much the ten differ is how "
@@ -220,7 +227,7 @@ def predict_manual(exp, log):
                 out.append(math.degrees(after - before))
             t += seconds
         return {"each_turn_deg": out}
-    if n == "square":
+    if n.startswith("square"):
         return {"final_x_m": log.final("x"), "final_y_m": log.final("y"),
                 "final_heading_deg": math.degrees(log.final("th")) % 360.0}
     return {}

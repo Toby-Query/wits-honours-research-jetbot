@@ -175,6 +175,10 @@ def main():
     ap.add_argument("--run-from", type=float, default=0.72,
                     help="fraction of the clip after which the robot is moving; "
                          "the floor is pictured from those frames")
+    ap.add_argument("--up", help="x of the joints running up the picture, if the "
+                                 "tool picks a rug's edge or a skirting board instead")
+    ap.add_argument("--across", help="y of the joints running across it")
+    ap.add_argument("--window", help="START,END in seconds: look for the run only here")
     ap.add_argument("--out")
     a = ap.parse_args()
     cap = cv2.VideoCapture(a.video)
@@ -183,8 +187,10 @@ def main():
     cap.set(cv2.CAP_PROP_POS_FRAMES, n // 2)
     ok, ref = cap.read()
     ups, acrosses, (w, h) = find_grid(ref)
-    up_pos = pick_regular([c for c in ups if 0.25 * w < c[0] < w], 2, w)
-    ac_pos = pick_regular(acrosses, 3, h)
+    up_pos = [float(v) for v in a.up.split(",")] if a.up else \
+        pick_regular([c for c in ups if 0.25 * w < c[0] < w], 2, w)
+    ac_pos = [float(v) for v in a.across.split(",")] if a.across else \
+        pick_regular(acrosses, 3, h)
     print(f"{n} frames at {fps:.2f} fps; joints up the picture at x = "
           f"{[round(p) for p in up_pos]}, across at y = {[round(p) for p in ac_pos]}")
     floor = floor_picture(cap, int(a.run_from * n), n - 5)
@@ -254,6 +260,9 @@ def main():
     turn = np.abs(np.gradient(sm(head))) * fps
     # The run is the last stretch with real movement in it. Small twitches of
     # the tracked centre while the robot sits still do not count.
+    if a.window:
+        w0, w1 = (float(v) for v in a.window.split(","))
+        speed = np.where((t >= w0) & (t <= w1), speed, 0.0)
     fast = np.flatnonzero(sm(speed) > 0.15)
     gaps = np.flatnonzero(np.diff(fast) > 4 * fps)
     first_fast = fast[gaps[-1] + 1] if len(gaps) else fast[0]
