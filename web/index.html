@@ -35,6 +35,8 @@ header h1 { font-size: 14px; font-weight: 650; margin: 0 6px 0 0; letter-spacing
 .chip.bad { background: var(--bad); color: #fff; }
 .chip.warn { background: var(--warn); color: #fff; }
 .spacer { flex: 1; }
+header a { font-size: 12px; font-weight: 600; color: #fff; background: var(--accent);
+  padding: 4px 11px; border-radius: 6px; text-decoration: none; }
 .panel { position: fixed; background: var(--panel); border: 1px solid var(--line);
   border-radius: 10px; backdrop-filter: blur(8px); z-index: 4; }
 #left { top: 52px; left: 12px; width: 232px; padding: 12px; max-height: calc(100% - 250px);
@@ -118,6 +120,7 @@ tr.warn .bar i { background: var(--warn); } tr.bad .bar i { background: var(--ba
   <span class="chip" id="c-pose">–</span>
   <span class="chip" id="c-state">–</span>
   <span class="spacer"></span>
+  <a href="./blueprint.html" id="to-bp" title="the electrics as an editable node graph (B)">Blueprint</a>
   <span class="chip" id="c-limits">ratings ok</span>
 </header>
 <div id="err"></div>

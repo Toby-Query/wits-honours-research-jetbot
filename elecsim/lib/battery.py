@@ -55,7 +55,7 @@ class Cell(Component):
             else self.chemistry
         self._s = np.array([a for a, _ in table])
         self._v = np.array([b for _, b in table])
-        self.state_soc = float(self.soc)
+        self.state_soc = self._soc_set = float(self.soc)
         self.v1 = 0.0
         self._i = None
         if self.i_max is not None:
@@ -63,6 +63,10 @@ class Cell(Component):
         if self.i_charge_max is not None:
             self.limit("i", min=-float(self.i_charge_max),
                        why="cell charge rating")
+
+    def refresh(self):
+        if self.soc != self._soc_set:          # the initial charge was edited
+            self.state_soc = self._soc_set = float(self.soc)
 
     def ocv(self, soc=None):
         return float(np.interp(self.state_soc if soc is None else soc,
@@ -155,6 +159,10 @@ class PackProtector(Component):
         self._timer = {"uv": 0.0, "ov": 0.0, "oc": 0.0, "retry": 0.0}
         self._v = 0.0
         self.trips = 0
+
+    def refresh(self):
+        from .semis import diode_fit
+        self.i_s = diode_fit(self.vf, 1.0, 1.8)
 
     def _cell_voltages(self, s):
         taps = [getattr(self, f"tap{k}") for k in range(1, int(self.cells) + 1)]

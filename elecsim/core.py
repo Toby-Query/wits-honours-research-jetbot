@@ -276,6 +276,11 @@ class Component:
     def init_state(self, s):
         pass
 
+    def refresh(self):
+        """Called after a parameter is changed on a live component. Anything
+        worked out from parameters in __init__ should be worked out again
+        here."""
+
     def relax(self):
         """Called when a solve fails. A part that can only meet its
         equations with a supply it has not got (a regulator, mostly) should

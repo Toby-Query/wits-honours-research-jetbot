@@ -60,6 +60,9 @@ class JetsonNano(Component):
         elif v >= self.v_min:
             self.on = True
 
+    def refresh(self):
+        self.inputs["p"] = float(self.power)
+
     def relax(self):
         if not self.on:
             return False

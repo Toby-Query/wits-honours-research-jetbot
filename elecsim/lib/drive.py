@@ -79,6 +79,7 @@ class PwmMotorDrive(Component):
 
     def __init__(self, name, **kw):
         super().__init__(name, **kw)
+        self._kt_follows = self.kt is None
         if self.kt is None:
             self.kt = self.ke
         self.inputs["omega"] = 0.0
@@ -133,6 +134,10 @@ class PwmMotorDrive(Component):
         dv = 1e-3
         g = (self.solve(v + dv)["i_supply"] - i0) / dv
         s.Inl(self.vm, self.gnd, i0, g)
+
+    def refresh(self):
+        if self._kt_follows:                   # kt was never given: it is ke
+            self.kt = self.ke
 
     def torque(self, i):
         return self.kt * self.gear * self.gear_eff * i

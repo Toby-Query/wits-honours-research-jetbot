@@ -156,6 +156,11 @@ Two things to know:
   equation continued as a straight line where the exponential would overflow,
   and it is what lets the solver recover from a bad first guess.
 
+If your part works something out from its parameters in `__init__` (a
+saturation current from a forward voltage, say), also do it in `refresh()`.
+That is what gets called when a parameter is changed on a live circuit, as the
+blueprint page does.
+
 Things the outside world sets while a simulation runs live in `self.inputs`: a
 switch's `closed`, a load's `p`, a motor's `omega`. A scenario's stimulus
 writes to them.

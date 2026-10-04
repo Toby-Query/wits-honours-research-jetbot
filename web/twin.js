@@ -112,20 +112,34 @@ new GLTFLoader().load('./jetbot.glb', (g) => {
     if (key === 'wheel_left') wheelL.push(holder);
     if (key === 'wheel_right') wheelR.push(holder);
   });
+  const ex = new URLSearchParams(location.search).get('explode');   // e.g. ?explode=1
+  if (ex) fetch('./model.json').then((r) => r.json()).then((mm) => { partMeta = mm.parts; $('explode').value = ex; explode(+ex); });
 }, undefined, () => {});
 
+// Pull the robot apart UPWARD, like lifting the layers off a stack: every
+// part rises in proportion to its own height, so nothing goes through the
+// floor, and the things that sit beside the stack move out sideways.
+const SIDEWAYS = { wheel_left: [0, 0, -1], wheel_right: [0, 0, 1], motor_left: [0, 0, -0.55],
+  motor_right: [0, 0, 0.55], fastener_left: [0, 0, -0.8], fastener_right: [0, 0, 0.8],
+  camera: [1.2, 0, 0], camera_mount: [0.8, 0, 0], antenna_a: [-0.9, 0, -0.5], antenna_b: [-0.9, 0, 0.5],
+  caster_a: [0.9, 0, 0], caster_b: [-0.9, 0, 0], base: [0, 0, 0] };
 function explode(k) {
-  const c0 = new THREE.Vector3(-0.022, 0.06, 0);
   for (const [key, list] of Object.entries(nodes)) {
     const meta = partMeta[key];
     if (!meta) continue;
-    const c = new THREE.Vector3(...meta.centre);
-    const d = c.clone().sub(c0);
-    d.y *= 2.2;                                   // mostly a vertical stack
-    d.multiplyScalar(1.6 * k);
+    const side = SIDEWAYS[key] || [0, 0, 0];
+    const rise = key === 'base' || key.startsWith('caster') ? 0 : meta.centre[1] * 1.9;
+    const d = new THREE.Vector3(side[0] * 0.11, rise + 0.03, side[2] * 0.11).multiplyScalar(k);
     for (const n of new Set(list)) n.position.copy(n.userData.home).add(d);
   }
+  // step back and look higher, so the top of the stack stays in the picture
+  const lift = 0.15 * (k - exploded), back = 1 + 0.9 * k, was = 1 + 0.9 * exploded;
+  const off = camera.position.clone().sub(controls.target).multiplyScalar(back / was);
+  controls.target.y += lift;
+  camera.position.copy(controls.target).add(off);
+  exploded = k;
 }
+let exploded = 0;
 $('explode').oninput = (e) => explode(+e.target.value);
 
 // click a part to read what it is
@@ -154,6 +168,9 @@ addEventListener('keydown', (e) => {
       document.activeElement.type !== 'range' && document.activeElement.type !== 'checkbox') return;
   const k = KEYMAP[e.key.toLowerCase()];
   if (k) { keys.add(k); e.preventDefault(); }
+});
+addEventListener('keydown', (e) => {
+  if (e.key.toLowerCase() === 'b' && !['INPUT', 'SELECT'].includes(document.activeElement.tagName)) location.href = './blueprint.html';
 });
 addEventListener('keyup', (e) => { const k = KEYMAP[e.key.toLowerCase()]; if (k) keys.delete(k); });
 addEventListener('blur', () => keys.clear());

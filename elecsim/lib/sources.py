@@ -87,6 +87,9 @@ class ConstantCurrentLoad(Component):
         super().__init__(name, **kw)
         self.inputs["i"] = float(self.i)
 
+    def refresh(self):
+        self.inputs["i"] = float(self.i)
+
     def stamp(self, s):
         v = s.vd(self.p, self.n)
         i = self.inputs["i"]
@@ -123,6 +126,9 @@ class ConstantPowerLoad(Component):
             self.limit("v", min="v_min", why="supply below operating range")
         if self.v_max is not None:
             self.limit("v", max="v_max", why="supply above operating range")
+
+    def refresh(self):
+        self.inputs["p"] = float(self.power)
 
     def _iv(self, v):
         P = self.inputs["p"]

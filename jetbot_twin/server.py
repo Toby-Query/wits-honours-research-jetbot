@@ -53,6 +53,9 @@ class Live:
         self.flags = {"lifted": False, "held": False, "charger": False,
                       "jetson": "idle"}
         self.fault = None
+        self.hold = None                    # a command that stays until changed
+        self.param_over = {}                # (component, parameter) -> value
+        self.baseline = None
         self.build()
 
     # -- building ------------------------------------------------------------
@@ -64,7 +67,22 @@ class Live:
             s, o = self.twin.dyn.s, old.dyn.s
             s.x, s.y, s.th = o.x, o.y, o.th
         self.apply_flags()
+        if self.baseline is None or self.baseline[0] != self.hw.board:
+            self.baseline = (self.hw.board, {
+                c.name: {k: float(v) for k, v in c._values.items()
+                         if isinstance(v, (int, float)) and not isinstance(v, bool)}
+                for c in self.twin.circuit})
+        for (comp, name), value in self.param_over.items():
+            self.set_param(comp, name, value)
         self.trail = []
+
+    def set_param(self, comp, name, value):
+        c = self.twin.circuit.components.get(comp)
+        if c is None or name not in c._params:
+            return False
+        setattr(c, name, float(value))           # Param validates the range
+        c.refresh()
+        return True
 
     def apply_flags(self):
         t, f = self.twin, self.flags
@@ -87,6 +105,7 @@ class Live:
             self.cmd = [max(-1.0, min(1.0, float(l))), max(-1.0, min(1.0, float(r)))]
             self.last_drive = time.time()
             self.script = None
+            self.hold = None
             return
         a = msg.get("action")
         if a == "reset":
@@ -114,6 +133,21 @@ class Live:
                 self.flags["lifted"], self.flags["held"] = exp.lifted, exp.held
                 self.build()
                 self.script = (exp, self.twin.t)
+        elif a == "hold":
+            l, r = msg["value"]
+            self.hold = None if not (l or r) else [
+                max(-1.0, min(1.0, float(l))), max(-1.0, min(1.0, float(r)))]
+            self.script = None
+        elif a == "param":
+            comp, name, value = msg["comp"], msg["name"], float(msg["value"])
+            if self.set_param(comp, name, value):
+                self.param_over[(comp, name)] = value
+        elif a == "param_reset":
+            self.param_over = {}
+            self.build(keep_pose=True)
+        elif a == "repair":
+            self.fault = None
+            self.build(keep_pose=True)
         elif a == "speed":
             self.speed = float(msg["value"])
 
@@ -140,6 +174,8 @@ class Live:
                     print("bad command:", e)
             if self.script:
                 self.cmd = self.scripted()
+            elif self.hold:
+                self.cmd = list(self.hold)
             elif time.time() - self.last_drive > 0.6:   # dead-man: keys released
                 self.cmd = [0.0, 0.0]
             try:
@@ -180,7 +216,12 @@ class Live:
                    "margin": l.margin, "violated": l.violated,
                    "severity": l.severity, "why": l.why}
                   for l in t.sim.monitor.results()]
-        return {"t": t.t, "tel": tel, "sig": sig, "limits": limits,
+        x = t.sim.sys.x
+        nets = {n.name: (float(x[n.node]) if n.node >= 0 else
+                         float(n.level) if n.is_signal else 0.0)
+                for n in t.circuit.nets.values()}
+        return {"t": t.t, "tel": tel, "sig": sig, "limits": limits, "nets": nets,
+                "hold": self.hold, "edited": len(self.param_over),
                 "flags": self.flags, "board": self.hw.board,
                 "script": self.script[0].name if self.script else None,
                 "fault": list(self.fault) if self.fault else None,
@@ -191,19 +232,36 @@ class Live:
 
     def design(self):
         c = self.twin.circuit
+        base = self.baseline[1]
         comps = []
         for comp in c:
             params = {}
             for k, v in comp._values.items():
                 if isinstance(v, (int, float)) and not isinstance(v, bool):
-                    params[k] = {"value": float(v),
+                    d = base.get(comp.name, {}).get(k, float(v))
+                    params[k] = {"value": float(v), "default": d,
                                  "unit": comp._params[k].unit,
+                                 "doc": comp._params[k].doc,
+                                 "min": comp._params[k].min,
+                                 "max": comp._params[k].max,
+                                 "edited": (comp.name, k) in self.param_over,
                                  "assumed": bool(getattr(v, "assumed", False)),
                                  "src": getattr(v, "src", "")}
+            limits = []
+            for lim in comp.all_limits():
+                for which in ("max", "min"):
+                    b = getattr(lim, which)
+                    if b is not None:
+                        limits.append({"signal": lim.signal, "which": which,
+                                       "param": b if isinstance(b, str) else None,
+                                       "why": lim.why})
             comps.append({"name": comp.name, "type": type(comp).__name__,
-                          "note": comp.note,
-                          "pins": {p.name: (p.net.name if p.net else None)
-                                   for p in comp.pins},
+                          "doc": ((type(comp).__doc__ or "").strip().splitlines()
+                                  or [""])[0],
+                          "note": comp.note, "limits": limits,
+                          "pins": [{"name": p.name, "kind": p.kind,
+                                    "net": p.net.name if p.net else None}
+                                   for p in comp.pins],
                           "params": params})
         hw = self.hw
         tun = []

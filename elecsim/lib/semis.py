@@ -61,6 +61,9 @@ class Diode(Component):
         if self.i_max is not None:
             self.limit("i", max="i_max", why="diode forward current")
 
+    def refresh(self):
+        self.i_s = diode_fit(self.vf, self.i_f, self.n)
+
     def stamp(self, s):
         v = limit_junction(s.vd(self.a, self.k), self._v, self.i_s, self.n)
         self._v = v
@@ -99,6 +102,9 @@ class MosfetSwitch(Component):
             self.limit("i", max="i_max", absolute=True, why="drain current")
         if self.v_max is not None:
             self.limit("v", max="v_max", absolute=True, why="drain-source voltage")
+
+    def refresh(self):
+        self.i_s = diode_fit(self.vf_body, 1.0, 1.8)
 
     def stamp(self, s):
         if self.inputs["on"]:

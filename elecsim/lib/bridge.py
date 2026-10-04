@@ -88,6 +88,9 @@ class HBridge(Component):
         if self.v_min is not None:
             self.limit("v_m", min="v_min", why="motor supply minimum")
 
+    def refresh(self):
+        self.i_s = diode_fit(self.vf, 1.0, 1.8)
+
     def _logic(self, pin, default):
         return (pin.level >= 0.5) if pin.net is not None else default
 

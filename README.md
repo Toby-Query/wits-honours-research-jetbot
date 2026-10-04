@@ -60,6 +60,17 @@ python -m jetbot_twin predict             # predictions with uncertainty bands
 python -m jetbot_twin export              # URDF and Gazebo SDF
 ```
 
+Press **B**, or the Blueprint button, for the electrics on their own page:
+
+![The blueprint: every component as a node, every number editable](docs/img/blueprint.png)
+
+Every component of the board is a node with its pins, a live instrument and
+its numbers. The numbers start as the JetBot's own; change one and the twin
+re-solves with it, and any part you have pushed past a rating goes red and
+says why. (Above: the 5 V set point raised to 5.4 V, and the Jetson objecting.)
+"reset values" puts everything back. The page is drawn from the live circuit,
+so a different elecsim design served the same way would draw itself.
+
 From Python it has the same interface as the real robot:
 
 ```python

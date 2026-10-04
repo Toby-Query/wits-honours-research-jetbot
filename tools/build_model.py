@@ -193,9 +193,9 @@ def main():
         pivot = centre if p["group"] == "wheel" else np.zeros(3)
         for k, (colour, (vs, fs)) in enumerate(sorted(p["by_colour"].items())):
             v, f = np.vstack(vs), np.vstack(fs)
-            # the Jetson is 380 tiny solids; it does not need 0.1 mm facets
-            if p["group"] in ("jetson", "heatsink", "fastener") and len(f) > 4000:
-                v, f = simplify(v, f, 0.75)
+            # Do NOT thin these meshes. The Jetson is 380 small separate
+            # solids, and a decimator run over the lot collapses the small
+            # ones into holes: the board ends up looking like lace.
             tm = trimesh.Trimesh(v - pivot, f, process=False)
             tm.merge_vertices()
             metal = p["group"] in ("chassis", "base", "camera_mount", "standoff",
@@ -204,7 +204,8 @@ def main():
                 material=trimesh.visual.material.PBRMaterial(
                     baseColorFactor=rgba(colour),
                     metallicFactor=0.55 if metal else 0.0,
-                    roughnessFactor=0.45 if metal else 0.75))
+                    roughnessFactor=0.45 if metal else 0.75,
+                    doubleSided=True))
             tri_total += len(f)
             geom = f"{node}__{k}"
             T = np.eye(4)

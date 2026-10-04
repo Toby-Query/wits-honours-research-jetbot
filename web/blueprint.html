@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JetBot blueprint</title>
+<style>
+:root {
+  --bg: #f4f5f3; --panel: #ffffff; --panel-2: #f0f1ee; --ink: #16181a; --muted: #62686e;
+  --line: #d3d6d1; --accent: #2a78d6; --good: #2c8a4b; --warn: #b7791f; --bad: #c8372d;
+  --n-power: #d9482f; --n-gnd: #8a9099; --n-signal: #2a78d6; --n-motor: #7a5cc4;
+  --shadow: 0 1px 3px rgba(0,0,0,.10);
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121416; --panel: #1b1e21; --panel-2: #24282c; --ink: #e9ebec; --muted: #9aa1a7;
+    --line: #30353a; --accent: #3987e5; --good: #5bbf7a; --warn: #e0b04f; --bad: #ff6f61;
+    --n-power: #ee6a52; --n-gnd: #6b727b; --n-signal: #5a9df0; --n-motor: #a48bea;
+    --shadow: 0 2px 8px rgba(0,0,0,.45);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+  font: 12px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+#bar { position: fixed; top: 0; left: 0; right: 0; z-index: 10; background: var(--panel);
+  border-bottom: 1px solid var(--line); padding: 7px 12px; display: flex; flex-direction: column; gap: 6px; }
+.brow { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+#bar h1 { font-size: 14px; margin: 0 4px 0 0; font-weight: 650; }
+#bar a { font-size: 12px; font-weight: 600; color: #fff; background: var(--accent);
+  padding: 4px 11px; border-radius: 6px; text-decoration: none; }
+label.ctl { display: flex; gap: 5px; align-items: center; color: var(--muted); white-space: nowrap; }
+label.ctl b { color: var(--ink); font: 11px var(--mono); min-width: 38px; text-align: right; }
+button, select, input[type=text] { font: inherit; color: var(--ink); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; }
+button { cursor: pointer; } button:hover { border-color: var(--accent); }
+input[type=range] { accent-color: var(--accent); }
+#bar input[type=range] { width: 110px; }
+.sep { width: 1px; align-self: stretch; background: var(--line); }
+.legend { display: flex; gap: 10px; color: var(--muted); font-size: 11px; align-items: center; }
+.legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle; }
+#status { font: 11px var(--mono); color: var(--muted); }
+#status.bad { color: var(--bad); } #status.warn { color: var(--warn); }
+#bp { position: fixed; top: 78px; left: 0; right: 0; bottom: 0; overflow: auto;
+  background: radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0) 0 0/28px 28px, var(--bg);
+  background-attachment: local, fixed; }
+#bp-world { position: relative; }
+#bp-scale { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+#bp-edges { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+#bp-edges path { fill: none; stroke-width: 2; pointer-events: stroke; }
+#bp-edges path.dim { opacity: .25; stroke-dasharray: 5 5; }
+#bp-nodes { position: absolute; top: 0; left: 0; }
+.bnode { position: absolute; width: 318px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 9px; box-shadow: var(--shadow); font-size: 11.5px; z-index: 2; }
+.bnode.off { opacity: .5; filter: saturate(.3); }
+.bnode.warn { border-color: var(--warn); }
+.bnode.burnt { border-color: var(--bad); box-shadow: 0 0 18px color-mix(in srgb, var(--bad) 40%, transparent); }
+.bnode.hide { display: none; }
+.bhead { padding: 6px 9px; border-bottom: 1px solid var(--line); cursor: grab; display: flex;
+  justify-content: space-between; align-items: baseline; gap: 8px; background: var(--panel-2);
+  border-radius: 8px 8px 0 0; user-select: none; }
+.bnode.burnt .bhead { background: color-mix(in srgb, var(--bad) 22%, var(--panel-2)); }
+.bhead b { font-size: 12px; } .bhead small { color: var(--muted); font-size: 10px; white-space: nowrap; }
+.bbody { display: flex; gap: 6px; padding: 7px 5px; }
+.bpins { display: flex; flex-direction: column; gap: 3px; min-width: 44px; }
+.bpins.out { align-items: flex-end; }
+.pin { display: flex; align-items: center; gap: 4px; color: var(--muted); font: 10px var(--mono); white-space: nowrap; }
+.pin.out { flex-direction: row-reverse; }
+.pin .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--panel); border: 1.5px solid var(--muted); flex: none; }
+.pin.sq .dot { border-radius: 2px; }
+.pin.live { color: var(--ink); }
+.pin.live .dot { background: var(--good); border-color: var(--good); }
+.bmid { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+canvas.bwidget { display: block; width: 100%; height: 66px; border-radius: 6px; background: var(--panel-2); border: 1px solid var(--line); }
+.bread { display: grid; grid-template-columns: 1fr auto; gap: 1px 8px; font: 10.5px var(--mono); }
+.bread span { color: var(--muted); } .bread b { font-weight: 500; text-align: right; }
+.blim { display: flex; flex-direction: column; gap: 3px; }
+.blim div { font-size: 9.5px; color: var(--muted); display: flex; justify-content: space-between; }
+.blim i { display: block; height: 4px; border-radius: 2px; background: var(--panel-2); overflow: hidden; }
+.blim i u { display: block; height: 100%; background: var(--good); }
+.blim .w u { background: var(--warn); } .blim .x u { background: var(--bad); }
+.bprop { display: grid; grid-template-columns: 1fr 76px 38px; grid-template-areas: "l n u" "s s s";
+  align-items: center; gap: 1px 5px; }
+.bprop .plab { grid-area: l; color: var(--muted); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bprop .plab.assumed::before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%;
+  border: 1px solid var(--warn); margin-right: 4px; vertical-align: middle; }
+.bprop .bnum { grid-area: n; width: 100%; height: 20px; padding: 0 0 0 5px; font: 10.5px var(--mono);
+  background: var(--panel-2); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; }
+.bprop .punit { grid-area: u; color: var(--muted); font-size: 9.5px; white-space: nowrap; overflow: hidden; }
+.bprop input[type=range] { grid-area: s; width: 100%; height: 11px; margin: 0; }
+.bprop.edited .plab, .bprop.edited .punit { color: var(--accent); }
+.bprop.edited .bnum { border-color: var(--accent); }
+details.bmore { color: var(--muted); font-size: 10px; }
+details.bmore > summary { cursor: pointer; padding: 2px 0; }
+details.bmore .bedit { padding-top: 5px; }
+.bedit { display: flex; flex-direction: column; gap: 6px; }
+.bfault { display: none; padding: 5px 9px; font-size: 10px; line-height: 1.45; border-top: 1px solid var(--line); }
+.bfault.on { display: block; }
+.bfault.burn { background: color-mix(in srgb, var(--bad) 16%, var(--panel)); color: var(--bad); }
+.bfault.warn { color: var(--warn); }
+.bfoot { padding: 4px 9px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; line-height: 1.35; }
+#err { position: fixed; top: 84px; left: 50%; transform: translateX(-50%); background: var(--bad); color: #fff;
+  padding: 6px 12px; border-radius: 6px; display: none; z-index: 20; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <div class="brow">
+    <h1>JetBot blueprint</h1>
+    <a href="./index.html" title="back to the robot (B)">3D view</a>
+    <span class="sep"></span>
+    <label class="ctl">left <input type="range" id="cl" min="-1" max="1" step="0.05" value="0"><b id="cl-v">0.00</b></label>
+    <label class="ctl">right <input type="range" id="cr" min="-1" max="1" step="0.05" value="0"><b id="cr-v">0.00</b></label>
+    <label class="ctl"><input type="checkbox" id="link" checked>together</label>
+    <button id="stop">stop</button>
+    <span class="sep"></span>
+    <label class="ctl"><input type="checkbox" id="f-held">wheels held</label>
+    <label class="ctl"><input type="checkbox" id="f-lifted">wheels up</label>
+    <label class="ctl"><input type="checkbox" id="f-charger">charger</label>
+    <label class="ctl">Jetson <select id="f-jetson"><option value="idle">idle</option><option value="teleop">streaming</option>
+      <option value="inference">inference</option><option value="max">flat out</option></select></label>
+    <label class="ctl">driver <select id="board-sel"><option value="drv8870">2 × DRV8870</option>
+      <option value="tb6612">TB6612FNG</option></select></label>
+  </div>
+  <div class="brow">
+    <input type="text" id="filter" placeholder="filter by part or net…" autocomplete="off" style="width:170px">
+    <label class="ctl"><input type="checkbox" id="rails">show ground</label>
+    <button id="zout">−</button><input type="range" id="zoom" min="0.3" max="1.6" step="0.01" value="0.8" style="width:90px">
+    <button id="zin">+</button><button id="fit">fit</button><button id="tidy" title="put every node back where it started">tidy</button>
+    <span class="sep"></span>
+    <button id="repair" title="clear every trip and failure">repair</button>
+    <button id="resetv" title="put every number back to the JetBot's own">reset values</button>
+    <span class="legend"><span><i style="background:var(--n-power)"></i>power</span>
+      <span><i style="background:var(--n-signal)"></i>signal</span>
+      <span><i style="background:var(--n-gnd)"></i>ground</span></span>
+    <span id="status">–</span>
+  </div>
+</div>
+<div id="err"></div>
+<div id="bp"><div id="bp-world"><div id="bp-scale"><svg id="bp-edges"></svg><div id="bp-nodes"></div></div></div></div>
+<script type="module" src="./blueprint.js"></script>
+</body>
+</html>
