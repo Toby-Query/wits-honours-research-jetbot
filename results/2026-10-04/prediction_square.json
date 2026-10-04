@@ -1,0 +1,113 @@
+{
+ "experiment": "square",
+ "recorded": "before the run, 2026-10-04",
+ "hardware": "hardware.py after every stage of calibration (pack, motor, floor). The square has not been used to fit anything",
+ "profile": [
+  [
+   1.0,
+   0,
+   0
+  ],
+  [
+   1.0,
+   0.5,
+   0.5
+  ],
+  [
+   0.6,
+   0,
+   0
+  ],
+  [
+   0.29,
+   -0.3,
+   0.3
+  ],
+  [
+   0.6,
+   0,
+   0
+  ],
+  [
+   1.0,
+   0.5,
+   0.5
+  ],
+  [
+   0.6,
+   0,
+   0
+  ],
+  [
+   0.29,
+   -0.3,
+   0.3
+  ],
+  [
+   0.6,
+   0,
+   0
+  ],
+  [
+   1.0,
+   0.5,
+   0.5
+  ],
+  [
+   0.6,
+   0,
+   0
+  ],
+  [
+   0.29,
+   -0.3,
+   0.3
+  ],
+  [
+   0.6,
+   0,
+   0
+  ],
+  [
+   1.0,
+   0.5,
+   0.5
+  ],
+  [
+   0.6,
+   0,
+   0
+  ],
+  [
+   0.29,
+   -0.3,
+   0.3
+  ],
+  [
+   0.6,
+   0,
+   0
+  ]
+ ],
+ "prediction": {
+  "final_x_m": -0.003,
+  "final_y_m": 0.003,
+  "final_heading_deg": 359.502,
+  "each_corner_deg": [
+   90,
+   90,
+   90,
+   90
+  ],
+  "total_rotation_deg": 360,
+  "x_range": [
+   -0.0,
+   0.71
+  ],
+  "y_range": [
+   -0.01,
+   0.71
+  ],
+  "end_from_start_m": 0.004
+ }
+}

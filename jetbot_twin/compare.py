@@ -39,6 +39,28 @@ def estimate_soc(hw, v_rest, p_5v):
     return 0.5 * (lo + hi)
 
 
+def as_executed(exp, real):
+    """The experiment with the timings the robot actually achieved.
+
+    The agent logs when each command was really sent. Writing fourteen
+    registers over I2C takes about 30 ms, so a 0.29 s turn comes out anywhere
+    from 0.28 to 0.31 s: small, but a tenth of a quarter-turn. Replaying the
+    twin on the robot's own timings keeps that out of the comparison.
+    """
+    sent = real.meta.get("commands_sent_at") if real is not None else None
+    if not sent:
+        return exp
+    ev = [tuple(float(x) for x in e.split(":")) for e in sent.split()]
+    profile = []
+    if ev[0][0] > 1e-3:
+        profile.append((ev[0][0], 0.0, 0.0))
+    for (t0, l, r), (t1, _, _) in zip(ev[:-1], ev[1:]):
+        if t1 - t0 > 1e-4:
+            profile.append((round(t1 - t0, 4), l, r))
+    from dataclasses import replace
+    return replace(exp, profile=profile)
+
+
 def replay(exp, real: Log, hw, dt=None):
     """Run the twin through what the robot was put through.
 
@@ -56,6 +78,7 @@ def replay(exp, real: Log, hw, dt=None):
             return float(np.interp(t, tt, pp))
     else:
         p_fn = None
+    exp = as_executed(exp, real)
     first = real.t <= max(0.5, min(1.0, exp.profile[0][0] * 0.8))
     v_rest = float(np.nanmean(real["bus_v"][first]))
     p_rest = float(np.nanmean(p[first])) if have_p else hw.jetson_p_idle

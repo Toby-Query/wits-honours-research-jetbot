@@ -33,6 +33,7 @@ import multiprocessing
 import os
 import signal
 import subprocess
+import threading
 import sys
 import time
 
@@ -94,6 +95,11 @@ class RawBus(object):
         os.write(self.fd, bytes(bytearray([reg, value & 0xFF, (value >> 8) & 0xFF])))
 
 
+# One I2C bus, two threads (one timing the motors, one reading sensors): every
+# transaction takes this first.
+BUS_LOCK = threading.RLock()
+
+
 def open_bus():
     for name in ("smbus", "smbus2"):
         try:
@@ -134,8 +140,9 @@ class Pca9685(object):
     # set, and nothing here sets it: sent as a block, all four bytes pile
     # into the first register and the output never changes.
     def _write4(self, base, on, off):
-        for k, v in enumerate((on & 0xFF, on >> 8, off & 0xFF, off >> 8)):
-            self.bus.write_byte_data(self.addr, base + k, v)
+        with BUS_LOCK:
+            for k, v in enumerate((on & 0xFF, on >> 8, off & 0xFF, off >> 8)):
+                self.bus.write_byte_data(self.addr, base + k, v)
 
     def set_pwm(self, ch, on, off):
         self._write4(self.LED0 + 4 * ch, on, off)
@@ -196,12 +203,14 @@ class Ina219(object):
         # Now and then a read comes back as nonsense (4.096 V on a 10 V
         # rail). A real rail does not move a volt in 20 ms: read it again.
         for _ in range(3):
-            raw = _swap(self.bus.read_word_data(self.addr, 0x02))
+            with BUS_LOCK:
+                raw = _swap(self.bus.read_word_data(self.addr, 0x02))
             bus_v = (raw >> 3) * 0.004
             if self.last is None or abs(bus_v - self.last) < 1.0:
                 break
         self.last = bus_v
-        sh = _swap(self.bus.read_word_data(self.addr, 0x01))
+        with BUS_LOCK:
+            sh = _swap(self.bus.read_word_data(self.addr, 0x01))
         if sh > 32767:
             sh -= 65536
         return bus_v, sh * 10e-6 / self.r
@@ -401,10 +410,41 @@ def run(exp, out_path, countdown):
     rows = []
     slow_every = max(1, int(round(hz / 5.0)))
     r, th, load = {}, {}, 0.0
+    events = []                       # (seconds, left, right): when each command was sent
+    state = {"cmd": (0.0, 0.0), "seg": 0, "done": False}
+
+    def commander(t0):
+        """Runs the profile on the clock and nothing else. The sensors are
+        read on another thread: some take 30 ms, some 200, and a 0.29 s turn
+        cannot wait for them."""
+        t_end = 0.0
+        try:
+            for k, (seconds, left, right) in enumerate(profile):
+                with BUS_LOCK:
+                    write_motor(pca, "left", left)
+                    write_motor(pca, "right", right)
+                events.append((time.time() - t0, left, right))
+                state["cmd"], state["seg"] = (left, right), k
+                t_end += seconds
+                while True:
+                    left_to_go = t_end - (time.time() - t0)
+                    if left_to_go <= 0:
+                        break
+                    time.sleep(min(left_to_go, 0.005) if left_to_go < 0.02 else left_to_go - 0.01)
+        finally:
+            with BUS_LOCK:
+                release(pca)
+            events.append((time.time() - t0, 0.0, 0.0))
+            state["cmd"], state["done"] = (0.0, 0.0), True
+
     try:
         t0 = time.time()
-        t_seg = 0.0
-        for k, (seconds, left, right) in enumerate(profile):
+        worker = threading.Thread(target=commander, args=(t0,))
+        worker.daemon = True
+        worker.start()
+        while not state["done"]:
+            now = time.time() - t0
+            k = state["seg"]
             if exp.get("jetson") == "stress":
                 if k == 1 and not burners:
                     for _ in range(multiprocessing.cpu_count()):
@@ -416,38 +456,30 @@ def run(exp, out_path, countdown):
                     for b in burners:
                         b.terminate()
                     burners = []
-            write_motor(pca, "left", left)
-            write_motor(pca, "right", right)
-            t_seg += seconds
-            while True:
-                now = time.time() - t0
-                if now >= t_seg:
-                    break
-                bv, ci = ina.read() if ina else (float("nan"), float("nan"))
-                # The Jetson's own monitor takes ~30 ms per value and the
-                # thermal zones are slower still: read them a few times a
-                # second and hold, so the bus voltage keeps its full rate.
-                n = len(rows)
-                if n % slow_every == 0:
-                    r = rails.read_one("POM_5V_IN")
-                if n % (5 * slow_every) == 0:
-                    r.update(rails.read_others("POM_5V_IN"))
-                    th = thermal()
-                    load = cpu.read()
+            left, right = state["cmd"]
+            bv, ci = ina.read() if ina else (float("nan"), float("nan"))
+            n = len(rows)
+            if n % slow_every == 0:
+                r = rails.read_one("POM_5V_IN")
+            if n % (5 * slow_every) == 0:
+                r.update(rails.read_others("POM_5V_IN"))
+                th = thermal()
+                load = cpu.read()
 
-                def rail(name, j):
-                    return r[name][j] if name in r else float("nan")
-                row = [now, left, right, bv, ci,
-                       rail("POM_5V_IN", 0), rail("POM_5V_IN", 1), rail("POM_5V_IN", 2),
-                       rail("POM_5V_GPU", 2), rail("POM_5V_CPU", 2),
-                       th.get("CPU-therm", float("nan")),
-                       th.get("GPU-therm", float("nan")), load]
-                if ads:
-                    row += [ads.read(j) for j in range(4)]
-                rows.append(row)
-                rest = (len(rows) / hz) - (time.time() - t0)
-                if rest > 0:
-                    time.sleep(rest)
+            def rail(name, j):
+                return r[name][j] if name in r else float("nan")
+            row = [now, left, right, bv, ci,
+                   rail("POM_5V_IN", 0), rail("POM_5V_IN", 1), rail("POM_5V_IN", 2),
+                   rail("POM_5V_GPU", 2), rail("POM_5V_CPU", 2),
+                   th.get("CPU-therm", float("nan")),
+                   th.get("GPU-therm", float("nan")), load]
+            if ads:
+                row += [ads.read(j) for j in range(4)]
+            rows.append(row)
+            rest = len(rows) / hz - (time.time() - t0)
+            if rest > 0:
+                time.sleep(rest)
+        worker.join(2.0)
     finally:
         stop_all()
 
@@ -457,6 +489,8 @@ def run(exp, out_path, countdown):
         f.write("# pca_prescale = %d\n# has_ina219 = %s\n# has_ads1115 = %s\n"
                 % (pca.prescale, bool(ina), bool(ads)))
         f.write("# rails = %s\n" % " ".join(rail_names))
+        f.write("# commands_sent_at = %s\n" % " ".join(
+            "%.4f:%g:%g" % e for e in events))
         f.write(",".join(cols) + "\n")
         for row in rows:
             f.write(",".join("%.6g" % x for x in row) + "\n")

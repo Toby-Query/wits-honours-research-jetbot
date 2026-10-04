@@ -42,9 +42,9 @@ class MassItem:
 @dataclass
 class Hardware:
     # ---------------------------------------------------------------- geometry
-    wheel_radius: float = assumed(
-        0.0325, "65 mm wheel per Waveshare; the CAD tyre is 67.2 mm. Measure "
-        "the loaded radius: roll ten turns and divide")
+    wheel_radius: float = measured(
+        0.0315, "63 mm across the tyre, by ruler, 2026-10-04 (was assumed 65 mm). "
+        "Unloaded; the loaded radius is a little less")
     track: float = measured(
         0.1149, "tyre centre to tyre centre, Jetbot STEP (wheel mid-planes at +/-57.45 mm)")
     caster_rear_x: float = measured(-0.082, "rear caster ball centre, STEP")
@@ -98,7 +98,8 @@ class Hardware:
     mu_tyre: float = assumed(0.8, "rubber tyre on a smooth hard floor")
     slip_knee: float = assumed(0.03, "slip speed at which traction saturates, m/s")
     c_rr: float = assumed(0.015, "tyre rolling resistance coefficient")
-    mu_caster: float = assumed(0.25, "steel ball in a plain socket: it mostly slides")
+    mu_caster: float = measured(0.324, "fitted to the spin on a tiled floor, "
+                                "2026-10-04 (was assumed 0.25)")
 
     # ------------------------------------------------------------------- motor
     # The kit's motors are "TT" gearmotors, 1:48, "idle speed 240 RPM"
@@ -120,7 +121,10 @@ class Hardware:
                               "pack resistance, not metered")
     motor_l: float = assumed(2.0e-3, "130-size motor wound for 6 V, estimate")
     gear: float = datasheet(48.0, "Waveshare: reduction 1:48")
-    gear_eff: float = assumed(0.65, "three-stage spur gearbox, estimate")
+    gear_eff: float = measured(0.514, "fitted to the straight run and the spin on "
+                               "the floor, 2026-10-04 (was assumed 0.65). It "
+                               "stands for all the drag the twin has no other "
+                               "name for, not only the gearbox")
     rotor_inertia: float = assumed(1.7e-7, "130-size armature, kg.m2 at the rotor")
     motor_friction_static_ratio: float = assumed(
         1.4, "breakaway friction over running friction")

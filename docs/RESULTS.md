@@ -11,7 +11,8 @@ python -m jetbot_twin --calibrated compare --session 2026-10-04
 ```
 
 **Done so far:** the two stationary experiments, the driver-chip test, the
-wheels-up sweep and the stall. **Not yet:** anything on the floor.
+wheels-up sweep, the stall, and the straight run and spin on the floor.
+**Not yet:** the held-out square.
 
 ## What the probe found
 
@@ -216,6 +217,72 @@ a low-battery cut-out at that voltage. Candidates are a cell or the switch
 losing contact while the robot was being handled, or the protection chip
 tripping; the logs cannot distinguish them. It has not recurred.
 
+## Experiment 5: straight, on the floor
+
+Command 0.5 for 2 s on 50 cm tiles, pack at 11.82 V. The twin's prediction was
+saved before the run ([prediction_straight.json](../results/2026-10-04/prediction_straight.json)).
+At that point the twin had been fitted only with the wheels in the air: its
+floor friction was still as assumed.
+
+| | Twin predicted | Robot | After the floor fit |
+|---|---|---|---|
+| Distance | 1.47 m | 1.43 m | 1.43 m |
+| Bus voltage lost | 103 mV | 139 mV | 113 mV |
+| Sideways drift | 0 | 5–10 cm left | 0 |
+| Heading change | 0 | about 10° | 0 |
+
+Distance was predicted to within 3 %. The drift and the turn are outside the
+twin: its two motors are identical, and it knows nothing of tile joints. The
+robot's own figures for them are rough (it may not have started square).
+
+## Experiment 6: spin, on the floor
+
+Command ∓0.4 for 2 s, run three times; the third, on a single tile clear of
+the joints, was filmed from above in slow motion. `tools/spin_video.py` reads
+the heading in every frame as the direction from the middle of the green
+chassis to its lit blue display: a marker with no symmetry. Scatter at rest
+is under 1°. Prediction saved beforehand:
+[prediction_spin.json](../results/2026-10-04/prediction_spin.json).
+
+| | Twin predicted | Robot | After the floor fit |
+|---|---|---|---|
+| Total rotation | 1095° (3.04 turns) | 1033° (2.87 turns) | 1025° |
+| Steady yaw rate | 556°/s | 504°/s | |
+| Ended this far from its start | 1 cm | 1 cm | |
+| Direction | counter-clockwise | counter-clockwise | |
+| Bus voltage lost | 68 mV | 108 mV | 82 mV |
+
+Rotation was predicted to within 6 %, on a quantity the twin's own error
+bars had put anywhere from 950° to 1310°.
+
+Getting this number took three attempts at the method, which is worth
+recording because the first two gave confident wrong answers (0.75 and 1.8
+turns). Following the long axis of the chassis is ambiguous by a half-turn
+and flickers; matching each frame's picture to the last is thrown by the
+robot's shadow turning with it. An unambiguous marker was the fix, as tape on
+the tyre was for the wheel.
+
+**What both floor runs say.** The twin was a few percent optimistic both
+times, and both times the robot drew more current than the twin expected. That
+is one thing, not two: more drag on the floor than assumed. Fitting the two
+drag numbers the twin has (`gear_eff` 0.65 → 0.514, `mu_caster` 0.25 → 0.324)
+brings distance and rotation to within 1 %. The voltage dips come closer but
+stay about 25 mV low, so there is still current going somewhere the twin does
+not account for. And `gear_eff` has moved further than a gearbox's efficiency
+plausibly would: it is absorbing drag that belongs to something the twin has
+no term for.
+
+## Experiment 7: the square (held out)
+
+Not yet run. The twin's prediction, with everything above fitted and the
+square itself used for nothing, is in
+[prediction_square.json](../results/2026-10-04/prediction_square.json): a
+0.71 m square, four quarter-turns to the left, ending within a centimetre of
+its start and facing the way it began. That is what a model with identical
+motors and no tile joints predicts. The straight run drifted 5–10 cm and
+turned about 10° in 1.4 m, so the real robot will not close the square; by
+how much is the result.
+
 ## What changed in the twin as a result
 
 | | Was | Now | From |
@@ -229,10 +296,12 @@ tripping; the logs cannot distinguish them. It has not recurred.
 | `motor_coulomb_fraction` | 0.7 | 0.56 | wheels-up sweep |
 | `motor_r` | 4.0 ohm | 3.45 ohm | stall |
 | `jetson_p_idle` | 2.5 W | 1.15 W | rest |
+| `wheel_radius` | 32.5 mm | 31.5 mm | ruler |
+| `gear_eff` | 0.65 | 0.514 | straight and spin |
+| `mu_caster` | 0.25 | 0.324 | spin |
 
 ## Still to do
 
-The floor tests (`straight`, `spin`, `step_response`) and the held-out
-`square`. Extra holds near full command, to look at the bend. And the hand
+The held-out `square`, and `step_response`. Extra holds near full command, to look at the bend. And the hand
 measurements: the robot's mass, the wheel's diameter, the cells'
 label.

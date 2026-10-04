@@ -12,3 +12,19 @@ rpm = [42.7, 71.3, 98.8, 124.8, 156.6, 212.8, 268.1, 319.4, 421.1, 483.9]
 # holes 40.5 68.5 93.8 119.7 147.2 200.0 252.1 306.5 415.9 464.4 (about 5 %
 # low) and by the motor's pitch 39 62 93 128 156 215 272 323 425 488 (within
 # 2 % of the above from 0.25 up). The pitch was the better of the two.
+
+[straight]
+# 0.5 for 2 s on 50 cm floor tiles, pack at 11.82 V. Measured by the user
+# against the tile lines.
+distance_m = 1.43
+# "maybe 5 to 10 cm" to the left, and "maybe 10 degrees or so"; the user is
+# not sure it started pointing straight, and it crossed tile joints.
+drift_m = 0.075
+heading_deg = 10.0
+
+[spin]
+# -0.4 / +0.4 for 2 s, on one tile clear of the joints, pack at 11.77 V.
+# From the top-down slow-motion video (spin_slowmo.mp4, 240.3 fps) by
+# tools/spin_video.py: see spin_video.json. Counter-clockwise from above.
+rotation_deg = 1033.0
+wander_m = 0.01

@@ -44,6 +44,10 @@ FLOOR = 0.5
 # (the centre of mass is behind the axle, so the robot tries to orbit rather
 # than turn on the spot), and the twin has no model of tyres sliding sideways.
 SPIN = 0.4
+# The square's corners: 0.29 s at this command is a quarter-turn in the
+# calibrated twin. (As first written the corners used FLOOR for 0.3 s, which
+# is nearer a half-turn: the "square" would have shuttled back and forth.)
+TURN = 0.3
 
 
 def _steps(levels, hold=2.0, rest=1.0, spin=False):
@@ -109,8 +113,9 @@ EXPERIMENTS = {e.name: e for e in [
         measure=["final offset from the start, m"]),
     Experiment(
         "square", [(1.0, 0, 0)] + [(1.0, FLOOR, FLOOR), (0.6, 0, 0),
-                                   (0.3, -FLOOR, FLOOR), (0.6, 0, 0)] * 4,
-        "An open-loop square. Nothing settles on this one: it is the test. "
+                                   (0.29, -TURN, TURN), (0.6, 0, 0)] * 4,
+        "An open-loop square, about 0.7 m a side, turning left at each corner. "
+        "Nothing settles on this one: it is the test. "
         "Whatever the twin predicts for where the robot ends up, after the "
         "other experiments have calibrated it, is the result to report.",
         measure=["final position x, y, m", "final heading, degrees"]),

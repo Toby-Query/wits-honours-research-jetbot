@@ -1,0 +1,10 @@
+{
+ "experiment": "spin",
+ "recorded": "before the run, 2026-10-04",
+ "hardware": "hardware.py after the sweep, stall and wheel measurement; caster and tyre friction still assumed",
+ "rotation_deg": 1095.0,
+ "turns": 3.04,
+ "wander_m": 0.007,
+ "peak_yaw_rate_deg_s": 557.0,
+ "bus_sag_mV": 84
+}
