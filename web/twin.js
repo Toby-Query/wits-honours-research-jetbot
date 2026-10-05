@@ -462,6 +462,10 @@ function frame(now) {
     const before = robot.position.clone();
     robot.position.set(t.x, lift, -t.y);
     robot.rotation.y = t.th;
+    // The floor is finite and the drive is not: keep it under the robot. It
+    // moves in whole metres, one coarse square, so it looks like it stands still.
+    floor.position.set(Math.round(t.x), 0, Math.round(-t.y));
+    if (grid) grid.position.copy(floor.position);
     stand.visible = m.flags.lifted;
     stand.position.set(t.x - 0.022 * Math.cos(t.th), 0.015, -t.y + 0.022 * Math.sin(t.th));
     stand.rotation.y = t.th;

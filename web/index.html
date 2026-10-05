@@ -45,6 +45,10 @@ header a { font-size: 12px; font-weight: 600; color: #fff; background: var(--acc
   flex-direction: column; }
 #charts { left: 12px; right: 12px; bottom: 12px; height: 172px; display: grid;
   grid-template-columns: repeat(3, 1fr); gap: 0; }
+/* hidden for now; delete this line to bring them back */
+#right, #exp-box, #charts > div:not(:last-child) { display: none; }
+/* of the charts only speed is shown: it keeps its old place, the right-hand third */
+#charts { left: auto; width: calc((100% - 24px) / 3); grid-template-columns: 1fr; }
 #charts > div { padding: 8px 12px 6px; border-right: 1px solid var(--line); min-width: 0; }
 #charts > div:last-child { border-right: 0; }
 #charts h3 { margin: 0 0 2px; }
@@ -162,10 +166,12 @@ tr.warn .bar i { background: var(--warn); } tr.bad .bar i { background: var(--ba
       <option value="S1,open">switch off</option>
     </select></label>
 
+  <div id="exp-box">
   <h3>Run an experiment</h3>
   <select id="exp"></select>
   <div class="hint" id="exp-doc" style="margin-top:5px"></div>
   <label class="row"><button class="primary" id="exp-run">Run on the twin</button></label>
+  </div>
 
   <h3>View</h3>
   <label class="row"><span>explode</span></label>
