@@ -45,8 +45,9 @@ header a { font-size: 12px; font-weight: 600; color: #fff; background: var(--acc
   flex-direction: column; }
 #charts { left: 12px; right: 12px; bottom: 12px; height: 172px; display: grid;
   grid-template-columns: repeat(3, 1fr); gap: 0; }
-/* hidden for now; delete this line to bring them back */
-#right, #exp-box, #charts > div:not(:last-child) { display: none; }
+/* hidden for now; take a selector out of this rule to bring its part back */
+#right, #exp-box, #charts > div:not(:last-child), #follow,
+label.row:has(#f-jetson), label.row:has(#board-sel) { display: none; }
 /* of the charts only speed is shown: it keeps its old place, the right-hand third */
 #charts { left: auto; width: calc((100% - 24px) / 3); grid-template-columns: 1fr; }
 #charts > div { padding: 8px 12px 6px; border-right: 1px solid var(--line); min-width: 0; }
