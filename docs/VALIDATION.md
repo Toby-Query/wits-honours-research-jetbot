@@ -3,11 +3,13 @@
 This is the lab sheet. It says what to do with the robot, what each step is
 for, and how the result gets back into the twin.
 
-**Nothing in this repository has been compared with the real robot yet.** The
-twin's predictions are in `results/predictions_*.json`, made before the robot
-was switched on. The procedure below has been run end to end against a
-stand-in (a second twin with altered numbers and noisy sensors) to show that
-it recovers known answers; that is described at the end and is not data.
+**This procedure was run on the real robot on 2026-10-04.** What it found is
+in [RESULTS.md](RESULTS.md); this page is the procedure, with a note wherever
+the session went differently from the plan. The twin's predictions are in
+`results/predictions_*.json`, made before the robot was switched on. Before
+that, the procedure was run end to end against a stand-in (a second twin with
+altered numbers and noisy sensors) to show that it recovers known answers;
+that is described at the end and is not data.
 
 ## What the robot can and cannot tell you
 
@@ -45,6 +47,12 @@ left to a fit.
 7. **Motor resistance**, if you have a multimeter: unplug one motor, measure
    across its leads, turning the wheel slightly by hand to find the lowest
    reading. Set `motor_r`.
+
+In the 2026-10-04 session only the wheel was measured (item 3). The driver
+chip was identified without opening the robot, by driving each chip's PWM
+channels in turn and watching the battery rail (`robot/agent.py identify`).
+The mass, the cells' label, the switch and the motor resistance by meter are
+still to do.
 
 ## Connecting
 
@@ -117,6 +125,17 @@ nothing else. If your robot runs smoothly at lower commands, lower `FLOOR` and
 where an open-loop square ends; the robot does it; the difference is the
 result.
 
+What the session added and left out. The square's corners came out wrong, so
+its corner was run on its own: `short_turns` (ten times) and `short_turns_24`,
+which measure how repeatable a quarter-turn is. `square_small` is the square
+with shorter sides, to fit under a phone held still. `step_response` was not
+run. Wheel speed, heading and path were read from video with the tools in
+`tools/`, not by counting turns or with a tape measure.
+
+Two things to do differently, both learned the hard way: take any tape used
+as a wheel marker off the tyre before the floor tests, and check from the log
+how long each command really lasted before trusting a short manoeuvre.
+
 ## Comparing and calibrating
 
 ```bash
@@ -170,12 +189,21 @@ Things I expect not to fit, so you are not surprised:
 - **Repeatability.** Run `straight` five times before trusting any one run;
   the spread between runs is the floor under any model error.
 
-## The predictions, as they stand
+How that list fared: the drift was there (about 2.6 % between the motors).
+The two-second spin fitted to 6 %, so lateral slip was not the problem. What
+did not fit was not on the list: short turns, and the top of the speed range.
+And the advice on repeatability was mostly not followed; only the short turn
+(24 times) and the wheels-up sweep (twice) were repeated.
+
+## The predictions, as they were before the session
 
 `python -m jetbot_twin predict` draws 40 robots from the uncertainty in
 `hardware.py` and runs each through the experiments. The full output, with
 what each prediction depends on most, is in
-[results/predictions.txt](../results/predictions.txt). For the DRV8870 board:
+[results/predictions.txt](../results/predictions.txt). The table below is for
+the DRV8870 board, which this robot turned out not to have; the TB6612FNG
+predictions in the same file are the ones the robot was held to, and
+[RESULTS.md](RESULTS.md) sets them against what was measured.
 
 | | 5 % | median | 95 % | depends most on |
 |---|---|---|---|---|
@@ -194,7 +222,8 @@ because nobody has yet measured what the motors are. And **the open-loop
 square cannot be predicted at all before calibration**; the band on its final
 heading is nearly the whole circle. Small errors in speed become large errors
 in a pose reached by dead reckoning. That is the honest starting point, and
-how much calibration narrows it is the result.
+how much calibration narrows it is the result. (It narrowed the sides of the
+square to a few centimetres and did not narrow the corners.)
 
 ## The rehearsal
 
