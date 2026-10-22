@@ -1,17 +1,16 @@
 {
- "time": 1791114586.1815171,
+ "time": 1792657028.2958283,
  "python": "3.6.9",
  "model": "NVIDIA Jetson Nano Developer Kit",
  "l4t": "# R32 (release), REVISION: 5.0, GCID: 25531747, BOARD: t210ref, EABI: aarch64, DATE: Fri Jan 15 22:55:35 UTC 2021",
  "nvpmodel": "NVPM ERROR: Error opening /sys/kernel/nvpmodel_emc_cap/emc_iso_cap: 13\nNVPM ERROR: failed to read PARAM EMC: ARG MAX_FREQ: PATH /sys/kernel/nvpmodel_emc_cap/emc_iso_cap",
- "uptime": "13:49:46 up 3 min,  1 user,  load average: 0.28, 0.48, 0.24",
- "camera": "/dev/video0",
+ "uptime": "10:17:08 up 11 min,  1 user,  load average: 0.00, 0.11, 0.13",
+ "camera": "(failed: Command 'ls /dev/video* 2>/dev/null' returned non-zero exit status 2.)",
  "jetbot_package": "(failed: Command 'python3 -c 'import jetbot,os;print(os.path.dirname(jetbot.__file__))'' returned non-zero exit status 1.)",
  "jetbot_motor_py": "(failed: Command 'python3 -c 'import jetbot.motor,inspect;print(inspect.getsource(jetbot.motor))'' returned non-zero exit status 1.)",
  "services": "(failed: Command 'systemctl is-active jetbot_stats jetbot_jupyter' returned non-zero exit status 3.)",
- "wifi": "wlan0     IEEE 802.11  ESSID:\"Legacy_1327\"  \n          Bit Rate=866.7 Mb/s   Tx-Power=22 dBm   \n          Link Quality=61/70  Signal level=-49 dBm",
+ "wifi": "wlan0     IEEE 802.11  ESSID:\"Legacy_1327\"  \n          Bit Rate=866.7 Mb/s   Tx-Power=22 dBm   \n          Link Quality=65/70  Signal level=-45 dBm",
  "i2c": [
-  "0x3c",
   "0x41",
   "0x60",
   "0x70"
@@ -19,36 +18,36 @@
  "has_pca9685": true,
  "has_ina219": true,
  "has_ads1115": false,
- "has_oled": true,
+ "has_oled": false,
  "pca_prescale": 30,
  "pca_mode1": 17,
  "ina_config": "0x399f",
- "bus_v": 10.268,
- "charge_i": -0.0004,
+ "bus_v": 12.128,
+ "charge_i": -0.00030000000000000003,
  "rails": {
   "POM_5V_GPU": [
-   4.96,
+   4.832,
    0.0,
    0.0
   ],
   "POM_5V_CPU": [
-   4.952,
+   4.832,
    0.12,
-   0.594
+   0.5798399999999999
   ],
   "POM_5V_IN": [
-   4.952,
+   4.832,
    0.344,
-   1.703
+   1.662208
   ]
  },
  "thermal": {
-  "PLL-therm": 20.5,
-  "CPU-therm": 20.5,
-  "iwlwifi": 40.0,
+  "PLL-therm": 22.0,
+  "CPU-therm": 23.5,
+  "iwlwifi": 43.0,
   "PMIC-Die": 100.0,
-  "GPU-therm": 22.0,
-  "AO-therm": 30.0,
-  "thermal-fan-est": 21.5
+  "GPU-therm": 24.0,
+  "AO-therm": 31.0,
+  "thermal-fan-est": 23.75
  }
 }

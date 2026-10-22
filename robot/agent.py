@@ -63,9 +63,12 @@ class RawBus(object):
         self._addr = None
 
     def _to(self, addr):
-        if addr != self._addr:
-            self._ioctl(self.fd, self.I2C_SLAVE, addr)
-            self._addr = addr
+        # Set the address on every transaction, never from a cache: the
+        # address lives in the open file, which forked processes share, so a
+        # child talking to another chip silently redirects the parent's reads
+        # (it did: jetson_load read the PCA9685 as the battery for 10 s).
+        self._ioctl(self.fd, self.I2C_SLAVE, addr)
+        self._addr = addr
 
     def read_byte(self, addr):
         self._to(addr)
@@ -344,7 +347,12 @@ class Cpu(object):
 
 
 def _burn():
+    # A burner is forked from run(), so it inherits run()'s SIGTERM/SIGHUP
+    # handlers, which release the motors over the shared I2C file. Being
+    # stopped must just end it.
     signal.signal(signal.SIGINT, signal.SIG_IGN)
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    signal.signal(signal.SIGHUP, signal.SIG_DFL)
     x = 1.0001
     while True:
         x = (x * x) % 1.7 + 1.0

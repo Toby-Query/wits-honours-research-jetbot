@@ -1,0 +1,3 @@
+{"readback_ch1": [0, 2047], "rest_v": 12.124, "drv8870_channels_v": 12.128, "tb6612_channels_v": 11.996,
+ "sag_drv8870_mV": -4, "sag_tb6612_mV": 128, "charge_i": 0.0001, "pwm_hz": 1525.88, "verdict": "tb6612",
+ "note": "robot 2, wheels off the ground, agent.py identify"}

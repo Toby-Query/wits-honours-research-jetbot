@@ -1,0 +1,9 @@
+{
+ "r_5v_path": 0.4937008571204958,
+ "cell_r0": 0.05747508810880392,
+ "motor_rpm_noload": 255.0,
+ "motor_i_noload": 0.197,
+ "motor_r": 3.45,
+ "board": "tb6612",
+ "motor_coulomb_fraction": 0.56
+}

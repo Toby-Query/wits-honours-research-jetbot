@@ -1,0 +1,15 @@
+{
+ "video": "data/real/robot2-2026-10-22/spin_3.mp4",
+ "rotation_deg": 996.2673365902155,
+ "quarter_turns_counted": 11,
+ "fraction_deg": 6.267336590215493,
+ "edge_deg_before_after": [
+  0.24671530877666153,
+  83.97937871856116
+ ],
+ "edge_spread_deg": [
+  0.2101293467042869,
+  0.7580129343742722
+ ],
+ "method": "tools/spin_shape.py: quarter-turns counted by eye on the frame strip, the rest from the boards' edges at rest"
+}

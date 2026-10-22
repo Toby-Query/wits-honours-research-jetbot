@@ -1,0 +1,38 @@
+{
+ "time": 1792619316.0579853,
+ "python": "3.6.9",
+ "model": "NVIDIA Jetson Nano Developer Kit",
+ "l4t": "# R32 (release), REVISION: 5.0, GCID: 25531747, BOARD: t210ref, EABI: aarch64, DATE: Fri Jan 15 22:55:35 UTC 2021",
+ "nvpmodel": "NVPM ERROR: Error opening /sys/kernel/nvpmodel_emc_cap/emc_iso_cap: 13\nNVPM ERROR: failed to read PARAM EMC: ARG MAX_FREQ: PATH /sys/kernel/nvpmodel_emc_cap/emc_iso_cap",
+ "uptime": "23:48:36 up 1 min,  0 users,  load average: 1.34, 0.55, 0.20",
+ "camera": "/dev/video0",
+ "jetbot_package": "(failed: Command 'python3 -c 'import jetbot,os;print(os.path.dirname(jetbot.__file__))'' returned non-zero exit status 1.)",
+ "jetbot_motor_py": "(failed: Command 'python3 -c 'import jetbot.motor,inspect;print(inspect.getsource(jetbot.motor))'' returned non-zero exit status 1.)",
+ "services": "(failed: Command 'systemctl is-active jetbot_stats jetbot_jupyter' returned non-zero exit status 3.)",
+ "wifi": "wlan0     IEEE 802.11  ESSID:\"Legacy_1327\"  \n          Bit Rate=866.7 Mb/s   Tx-Power=22 dBm   \n          Link Quality=65/70  Signal level=-45 dBm",
+ "i2c": [
+  "0x3c",
+  "0x41",
+  "0x60",
+  "0x70"
+ ],
+ "has_pca9685": true,
+ "has_ina219": true,
+ "has_ads1115": false,
+ "has_oled": true,
+ "pca_prescale": 30,
+ "pca_mode1": 17,
+ "ina_config": "0x399f",
+ "bus_v": 12.252,
+ "charge_i": 0.0,
+ "rails": {},
+ "thermal": {
+  "PLL-therm": 24.5,
+  "CPU-therm": 24.0,
+  "iwlwifi": 44.0,
+  "PMIC-Die": 100.0,
+  "GPU-therm": 26.5,
+  "AO-therm": 34.5,
+  "thermal-fan-est": 25.5
+ }
+}

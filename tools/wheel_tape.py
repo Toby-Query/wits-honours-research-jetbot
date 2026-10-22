@@ -163,24 +163,33 @@ def main():
     cmds = [abs(seg[2]) for seg in exp.profile if seg[1] or seg[2]]
     hold_len = want[0][1] - want[0][0]
     out = []
-    print(" cmd    speed      steadiness   spin-up   stops in   turns in all")
+    print(" cmd    speed      steadiness   spin-up   stops in   turns in all   misread")
     for cmd, (s, e) in zip(cmds, runs):
         on_end = s + int(hold_len * fps)                       # when the command ended
         a0, a1 = s + int(0.8 * fps), on_end - int(0.05 * fps)  # the settled part
-        slope = np.polyfit(np.arange(a0, a1), th[a0:a1], 1)[0]
-        rpm = abs(slope) / (2 * np.pi) * fps * 60.0
-        inst = np.abs(np.gradient(th[a0:a1])) / (2 * np.pi) * fps * 60.0
+        # The median step from frame to frame, each step wrapped to a half
+        # turn. A frame where the tape is misread (blur, a hole) gives one
+        # wild step; in a straight-line fit through the unwrapped angle it
+        # can add or drop a whole turn, here it is simply outvoted.
+        step = np.angle(np.exp(1j * np.diff(th[a0:a1])))
+        typical = np.median(step)
+        rpm = abs(typical) / (2 * np.pi) * fps * 60.0
+        misread = np.abs(step - typical) > max(0.5 * abs(typical), np.radians(2))
+        clean = np.where(misread, typical, step)
+        inst = np.abs(clean) / (2 * np.pi) * fps * 60.0
         inst = np.convolve(inst, np.ones(int(fps / 10)) / int(fps / 10), "valid")
         wobble = float(np.std(inst))
+        bad_frac = float(np.mean(misread))
         seg = rate[s:on_end] * fps * 60.0
         up = np.flatnonzero(seg > 0.63 * rpm)
         t_up = float(up[0] / fps) if len(up) else float("nan")
         t_stop = max(0.0, (e - on_end) / fps)
         turns = abs(th[min(e + 50, n - 1)] - th[max(s - 50, 0)]) / (2 * np.pi)
         out.append(dict(cmd=cmd, rpm=float(rpm), wobble_rpm=wobble, spin_up_s=t_up,
-                        stop_s=float(t_stop), turns=float(turns)))
+                        stop_s=float(t_stop), turns=float(turns),
+                        misread_frac=bad_frac))
         print(f"{cmd:5.2f}  {rpm:6.1f} rpm   +/-{wobble:4.1f} rpm   {t_up * 1e3:5.0f} ms   "
-              f"{t_stop * 1e3:5.0f} ms   {turns:7.2f}")
+              f"{t_stop * 1e3:5.0f} ms   {turns:7.2f}      {bad_frac * 100:4.1f} %")
     if a.out:
         Path(a.out).write_text(json.dumps(
             {"video": str(a.video), "true_fps": fps, "holds": out}, indent=1))

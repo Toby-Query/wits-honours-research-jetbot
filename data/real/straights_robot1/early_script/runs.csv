@@ -1,0 +1,4 @@
+run,file,started,rest_v,sag_mv,motors_on_s,status
+1,straight_01.csv,23:53:16,12.250,160,1.963,bad
+2,straight_02.csv,23:53:53,12.246,142,1.980,ok
+3,straight_03.csv,23:54:29,12.242,147,1.975,ok
