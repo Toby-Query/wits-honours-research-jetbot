@@ -1,0 +1,72 @@
+{
+ "made": "2026-10-22T21:07:13",
+ "robot": "robot 2 (192.168.1.104, Jetson serial 1422119075230)",
+ "calibration": "results/calibrated_robot2.json",
+ "experiment": "straight: 0.5/0.5 for 2.0 s from rest",
+ "note": "Made before any robot-2 straight run. Each real run is replayed at its own rest voltage and logged command times; this table is for reference.",
+ "by_rest_voltage": [
+  {
+   "rest_v": 12.3,
+   "distance_m": 1.4308,
+   "coast_m": 0.0652,
+   "drift_m": 0.0,
+   "heading_deg": 0.0
+  },
+  {
+   "rest_v": 12.2,
+   "distance_m": 1.4182,
+   "coast_m": 0.0646,
+   "drift_m": 0.0,
+   "heading_deg": 0.0
+  },
+  {
+   "rest_v": 12.1,
+   "distance_m": 1.4061,
+   "coast_m": 0.064,
+   "drift_m": 0.0,
+   "heading_deg": 0.0
+  },
+  {
+   "rest_v": 12.0,
+   "distance_m": 1.3929,
+   "coast_m": 0.0634,
+   "drift_m": 0.0,
+   "heading_deg": 0.0
+  },
+  {
+   "rest_v": 11.9,
+   "distance_m": 1.3803,
+   "coast_m": 0.0628,
+   "drift_m": 0.0,
+   "heading_deg": 0.0
+  },
+  {
+   "rest_v": 11.8,
+   "distance_m": 1.3676,
+   "coast_m": 0.0621,
+   "drift_m": 0.0,
+   "heading_deg": 0.0
+  },
+  {
+   "rest_v": 11.7,
+   "distance_m": 1.3549,
+   "coast_m": 0.0615,
+   "drift_m": 0.0,
+   "heading_deg": 0.0
+  },
+  {
+   "rest_v": 11.6,
+   "distance_m": 1.3426,
+   "coast_m": 0.0609,
+   "drift_m": 0.0,
+   "heading_deg": 0.0
+  },
+  {
+   "rest_v": 11.5,
+   "distance_m": 1.3294,
+   "coast_m": 0.0603,
+   "drift_m": 0.0,
+   "heading_deg": 0.0
+  }
+ ]
+}

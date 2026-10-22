@@ -129,31 +129,68 @@ def main():
     moving = rate > max(2e-4, 0.25 * np.percentile(rate, 60))
     if not moving.any():
         raise SystemExit("the wheel never appears to turn: is the tape visible on the hub's rim?")
-    # runs of motion longer than a few hundred frames are the holds
-    edges = np.flatnonzero(np.diff(moving.astype(int)))
-    runs = []
-    start = None
-    for i in range(n):
-        if moving[i] and start is None:
-            start = i
-        elif not moving[i] and start is not None:
-            if i - start > 200:
-                runs.append((start, i))
-            start = None
-    if start is not None and n - start > 200:
-        runs.append((start, n))
+    # The holds are the long runs of motion. How long "long" is depends on
+    # the frame rate (a 2 s hold is 120 frames at 60 fps, 480 in slow
+    # motion), so each usual phone rate is tried and the one that finds as
+    # many holds as the experiment has, evenly spaced, is kept.
     want = holds(exp)
-    print(f"{n} frames; found {len(runs)} bursts of motion, the experiment has {len(want)} holds")
-    if len(runs) != len(want):
-        # merge bursts split by a brief stall
-        merged = [runs[0]]
-        for s, e in runs[1:]:
-            if s - merged[-1][1] < 150:
-                merged[-1] = (merged[-1][0], e)
+    period = want[1][0] - want[0][0]
+
+    def find_runs(fps_guess):
+        runs, start = [], None
+        for i in range(n + 1):
+            mv = moving[i] if i < n else False
+            if mv and start is None:
+                start = i
+            elif not mv and start is not None:
+                runs.append((start, i))
+                start = None
+        merged = []
+        for s_, e_ in runs:                        # join brief stalls
+            if merged and s_ - merged[-1][1] < 0.6 * fps_guess:
+                merged[-1] = (merged[-1][0], e_)
             else:
-                merged.append((s, e))
-        runs = merged
-        print(f"  after joining short gaps: {len(runs)}")
+                merged.append((s_, e_))
+        return [(s_, e_) for s_, e_ in merged if e_ - s_ > 0.8 * fps_guess]
+
+    def original_rule():
+        # what was used for robot 1's slow-motion sweeps: runs over 200
+        # frames, joined across stalls under 150 frames if that is needed
+        runs, start = [], None
+        for i in range(n + 1):
+            mv = moving[i] if i < n else False
+            if mv and start is None:
+                start = i
+            elif not mv and start is not None:
+                if i - start > 200:
+                    runs.append((start, i))
+                start = None
+        if len(runs) != len(want) and runs:
+            merged = [runs[0]]
+            for s_, e_ in runs[1:]:
+                if s_ - merged[-1][1] < 150:
+                    merged[-1] = (merged[-1][0], e_)
+                else:
+                    merged.append((s_, e_))
+            runs = merged
+        return runs
+
+    best = None
+    runs = original_rule()
+    if len(runs) == len(want):
+        best = (0.0, "slow-motion", runs)
+    for fps_guess in (() if best else (240, 120, 60, 30)):
+        runs = find_runs(fps_guess)
+        if len(runs) != len(want):
+            continue
+        gaps = np.diff([s_ for s_, e_ in runs])
+        spread = np.std(gaps) / np.median(gaps)
+        if best is None or spread < best[0]:
+            best = (spread, fps_guess, runs)
+    if best is None:
+        raise SystemExit(f"could not split the video into {len(want)} holds")
+    runs = best[2]
+    print(f"{n} frames; found {len(runs)} holds of motion ({best[1]} rule)")
     starts = np.array([s for s, e in runs], float)
     period = want[1][0] - want[0][0]
     fps = float(np.median(np.diff(starts)) / period) if len(starts) > 2 else float("nan")

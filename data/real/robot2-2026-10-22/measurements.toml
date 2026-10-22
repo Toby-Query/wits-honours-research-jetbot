@@ -1,0 +1,10 @@
+# Robot 2, 2026-10-22, charger unplugged.
+
+[wheels_up_sweep]
+# Second sweep (wheels_up_sweep.csv), pack 11.47 V at rest. Steady wheel
+# speed in each hold, rpm, from wheels_up_sweep_60fps.mp4 (59.7 fps true by
+# the hold spacing, which varies by only 30 ms) by tools/wheel_tape.py,
+# median-step method: see wheel_speed_60fps.json. The first, slow-motion sweep
+# is in wheels_up_sweep_run1_slowmo.csv; its video dropped frames above 0.4.
+#       0.10  0.15  0.20  0.25   0.30   0.40   0.50   0.60   0.80   1.00
+rpm = [37.7, 63.8, 87.4, 108.6, 135.7, 187.9, 230.0, 280.7, 341.7, 390.3]

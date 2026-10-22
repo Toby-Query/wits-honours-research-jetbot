@@ -84,3 +84,34 @@ quarter-turns each), the rest from the boards' edges at rest.
 The floor fit (mu_caster from these; gear_eff kept from robot 1, which used
 robot 1's straights, not robot 2's) waits for a good wheels-up sweep, since
 the spin depends on the motor numbers too.
+
+## Second wheels-up sweep (60 fps) and the motor fit
+
+wheels_up_sweep.csv with wheels_up_sweep_60fps.mp4 (FHD 60; 59.7 fps true, the
+hold spacing varies by only 30 ms, so no dropped frames). Pack 11.47 V.
+
+| cmd | 0.10 | 0.15 | 0.20 | 0.25 | 0.30 | 0.40 | 0.50 | 0.60 | 0.80 | 1.00 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| rpm | 37.7 | 63.8 | 87.4 | 108.6 | 135.7 | 187.9 | 230.0 | 280.7 | 341.7 | 390.3 |
+
+**The flattening above 0.6 is real.** It is in this steady 60 fps video as
+well, so the slow-motion video's dropped frames were not its cause (an
+earlier note said they might be). About +49 rpm per 0.1 up to 0.6, about +27
+above. The twin's speed rises in a straight line to full command and cannot
+follow it. At low commands this sweep is 5-10 % slower than the slow-motion
+one, more than its 2.6 % lower pack explains; that is not understood.
+
+So the motors were fitted to holds 0.10-0.60 only, the range the straights
+(0.5) use: motor_rpm_noload 248.9, motor_i_noload 0.1107, rms 1.1 % over
+that range and +0.8 % at 0.5. Adding motor_coulomb_fraction did not help.
+motor_r refitted from the stall with these: 3.153 ohm (unchanged).
+
+## Floor fit
+
+mu_caster from spins 2 and 3 only, with gear_eff held at robot 1's 0.514:
+0.324 -> **0.506**. The twin then gives 991 and 989 deg against 984 and 996.
+Robot 2's casters drag about half again as much as robot 1's on the same
+tiles.
+
+Result: results/calibrated_robot2.json. Prediction and test plan, before any
+straight run: results/robot2/.

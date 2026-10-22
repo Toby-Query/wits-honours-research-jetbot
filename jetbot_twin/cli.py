@@ -38,6 +38,11 @@ def _hw(args):
     cal = RESULTS / "calibrated.json"
     if getattr(args, "calibrated", False) and cal.exists():
         kw.update(json.loads(cal.read_text()))
+    if getattr(args, "calibration", None):
+        # a named calibration file, e.g. results/calibrated_robot2.json;
+        # keys starting with "_" are notes
+        kw.update({k: v for k, v in json.loads(Path(args.calibration).read_text()).items()
+                   if not k.startswith("_")})
     return DEFAULT.with_(**kw) if kw else DEFAULT
 
 
@@ -314,6 +319,9 @@ def main(argv=None):
     ap.add_argument("--board", choices=["drv8870", "tb6612"])
     ap.add_argument("--calibrated", action="store_true",
                     help="apply results/calibrated.json")
+    ap.add_argument("--calibration", metavar="FILE",
+                    help="apply this calibration file instead, e.g. "
+                         "results/calibrated_robot2.json")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("info").set_defaults(fn=cmd_info)
     sub.add_parser("assumptions").set_defaults(fn=cmd_assumptions)
