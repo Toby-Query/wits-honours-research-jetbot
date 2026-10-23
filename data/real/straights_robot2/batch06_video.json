@@ -1,0 +1,85 @@
+{
+ "video": "data/real/straights_robot2/batch06.mp4",
+ "fps": 30.00414808633921,
+ "camera_height_m": null,
+ "top_height_m": null,
+ "height_scale_applied": 1.0,
+ "clock_offset_s": -1792771661.9817684,
+ "runs": [
+  {
+   "log": "straight_26.csv",
+   "video_start_s": 15.564514568324757,
+   "distance_m": 1.198024034500122,
+   "drift_m": -0.03510622680187225,
+   "heading_deg": 0.519901132439298,
+   "rest_scatter_mm": 4.709040746092796,
+   "motors_on_s": 1.5026999999999997,
+   "robot_px_before_after": [
+    12741,
+    13485
+   ],
+   "green_vs_whole_shift_mm": -86.89484284076255,
+   "frames_without_robot": 0
+  },
+  {
+   "log": "straight_27.csv",
+   "video_start_s": 33.795327135506,
+   "distance_m": 1.0463871955871582,
+   "drift_m": 0.42944633960723877,
+   "heading_deg": 50.13019418921035,
+   "rest_scatter_mm": 6.106926593929529,
+   "motors_on_s": 1.4996,
+   "robot_px_before_after": [
+    12943,
+    12153
+   ],
+   "green_vs_whole_shift_mm": -96.3420553211789,
+   "frames_without_robot": 0
+  },
+  {
+   "log": "straight_28.csv",
+   "video_start_s": 50.55967580331618,
+   "distance_m": 1.22081458568573,
+   "drift_m": 0.030994005501270294,
+   "heading_deg": 2.91705976291751,
+   "rest_scatter_mm": 9.659123606979847,
+   "motors_on_s": 1.4915,
+   "robot_px_before_after": [
+    13719,
+    14031
+   ],
+   "green_vs_whole_shift_mm": -76.11873115576606,
+   "frames_without_robot": 0
+  },
+  {
+   "log": "straight_29.csv",
+   "video_start_s": 69.65703522012578,
+   "distance_m": 1.2383103370666504,
+   "drift_m": 0.02881641685962677,
+   "heading_deg": 4.411506895491487,
+   "rest_scatter_mm": 6.628451868891716,
+   "motors_on_s": 1.4996,
+   "robot_px_before_after": [
+    14048,
+    14166
+   ],
+   "green_vs_whole_shift_mm": -88.36589453377219,
+   "frames_without_robot": 0
+  },
+  {
+   "log": "straight_30.csv",
+   "video_start_s": 88.42110738707832,
+   "distance_m": 1.2214311361312866,
+   "drift_m": -0.0128994882106781,
+   "heading_deg": 1.7264678004054337,
+   "rest_scatter_mm": 1.5894431853666902,
+   "motors_on_s": 1.5005000000000002,
+   "robot_px_before_after": [
+    14316,
+    13287
+   ],
+   "green_vs_whole_shift_mm": -91.46820253921307,
+   "frames_without_robot": 0
+  }
+ ]
+}
