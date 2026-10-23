@@ -79,7 +79,7 @@
   #v(2em)
   #text(size: 12pt)[#author]
   #v(0.4em)
-  #text(size: 10.5pt, fill: luma(90))[Experimental work carried out on 4 October 2026]
+  #text(size: 10.5pt, fill: luma(90))[Experimental work carried out on 4, 22 and 23 October 2026, on two robots]
   #v(2.2cm)
 ]
 
@@ -110,28 +110,41 @@ and not a fit. Every number in the twin carries a record of where it came
 from. Predictions, with uncertainty bands, were written down before the robot
 was switched on. Calibration was done in stages, each from an experiment
 designed to isolate a few numbers, and one manoeuvre was held back from all
-fitting to test the result.
+fitting to test the result. A second robot of the same model was then
+calibrated on its own and driven straight fifty times, against a test fixed
+in writing before the first run.
 
 The main findings are these.
 
-- *Steady motion is predicted to within a few percent.* The straight-line
-  distance was predicted before the run to within 3 %, a two-second spin to
-  within 6 %, and wheel speed across the whole command range to within 8 %
-  after calibration.
+- *On the first robot, steady motion was predicted to within a few percent.*
+  The straight-line distance was predicted before the run to within 3 %, a
+  two-second spin to within 6 %, and wheel speed across the whole command
+  range to within 8 % after calibration.
+- *Over fifty straight runs on the second robot, the twin passes the planned
+  test and still under-predicts.* It falls inside the robot's own spread, as
+  the test required, and the robot goes 6 % further on average. But a fifth
+  of the runs swerved hard to the left, which the twin cannot do, and those
+  widen the spread. On the forty that went straight the robot repeats itself
+  to 1.8 cm and the twin is 8 % short every time. The cause is identified: the
+  twin's caster has one drag coefficient, fitted to spins, where the caster is
+  dragged; driving straight, it rolls.
 - *Short, open-loop turns are not predicted.* In a driven square the twin got
   every side right to within a few centimetres and every corner wrong, by up
   to 39°. The robot itself does not repeat those corners: taken straight
   after a side they vary three times as much as the same turn from rest.
 - *The comparison found things the design documents do not show.* The
   Jetson's 5 V supply falls to 4.5 V under load, below its specification,
-  through about 0.5 Ω that is on no schematic. The board carries a different
+  through about 0.5 Ω that is on no schematic, and does so on both robots.
+  The board carries a different
   motor driver from the one first assumed, and which driver is fitted changes
   what a motor command means. The two motors differ by about 2.6 %.
 - *Several of the project's own errors were caught by its own checks*, and
   are reported here as part of the result: a calibration that fitted a 10 mm
-  wheel, a "square" that was not a square, two video-tracking methods that
-  gave confident wrong answers, and a strip of tape left on a tyre through
-  half the floor tests.
+  wheel, a "square" that was not a square, video-tracking methods that gave
+  confident wrong answers, a strip of tape left on a tyre through half the
+  floor tests, a fault in the robot-side agent that corrupted readings, and
+  a height correction that understated every distance by 4 % until the
+  robot's own LED was used to check it.
 
 #outline(depth: 2, indent: auto)
 #pagebreak()
@@ -541,6 +554,7 @@ result.
   [`spin`], [floor], [caster friction],
   [`square`], [floor], [nothing: this is the held-out test],
   [`short_turns`], [floor], [how repeatable the square's corner is],
+  [`straight_short`], [floor], [nothing: robot 2's fifty-run test (@sec-robot2)],
 )
 
 == Predictions made beforehand
@@ -578,7 +592,7 @@ previous version (@sec-mistakes).
 
 == Reading the videos <sec-video>
 
-Three tools were written.
+Three tools were written for the first robot, and three more for the second.
 
 #table(
   columns: (auto, 1fr),
@@ -586,7 +600,13 @@ Three tools were written.
   [`wheel_tape.py`], [A strip of tape on the hub is a once-per-turn marker. The wheel's angle is read in every frame of a slow-motion video. The true frame rate (240.3 fps) is recovered from the experiment's own timing],
   [`spin_video.py`], [The robot's heading is the direction from the centre of its green chassis to its lit blue display: a marker with no symmetry],
   [`path_video.py`], [The floor's tile joints, 50 cm apart, fix the map from picture to floor including perspective. The robot is found as a shape against the empty floor],
+  [`spin_shape.py`], [For robot 2, whose display is broken: whole quarter-turns counted by eye on a strip of frames, the rest from the angle of the boards' straight edges at rest. Agrees with `spin_video.py` to 0.3° on robot 1's slow-motion spin],
+  [`straights_video.py`], [For a batch of runs in one video: runs matched to the logs by timing, the robot located at rest by difference between the frame before and after, height corrected against its LED (@sec-robot2)],
 )
+
+`wheel_tape.py` was later changed to take the median step from frame to
+frame, because a single misread frame could add or drop a whole turn in a
+straight-line fit. It reproduces robot 1's table to 1 to 3 %.
 
 In each case the first method tried was wrong, and wrong with confidence.
 The lesson was the same each time: use a marker that cannot be confused with
@@ -729,7 +749,7 @@ The robot's speed stops rising in proportion at the top. From 0.6 to 0.8 it
 gains 102 rpm; from 0.8 to 1.0, only 63. At full command the robot is slower
 than the twin and also draws less current. A loss growing with the square of
 speed was tried and did not help, because it would raise the current. This is
-unexplained.
+unexplained. Robot 2 flattens too, and earlier, from a command of 0.6.
 
 === Two runs, and the floor they set
 
@@ -917,7 +937,188 @@ established.
   [Short turn from rest], [13 % low; robot scatter ±8°], [no],
   [Square: the corners], [wrong by up to 39°], [no],
   [Straight-line drift], [not modelled], [no],
+  [Robot 2, 50 straights: planned spread test], [passes; robot +6.0 % on average], [yes, test fixed beforehand],
+  [Robot 2, the 40 that went straight], [twin 8 % short, every run], [yes],
+  [Robot 2, the swerves (10 of 50)], [cannot be produced], [no],
 )
+
+= A second robot, and fifty straight runs <sec-robot2>
+
+== Why the question changed
+
+The first session measured almost everything once. The lab sheet's own advice,
+to run the straight five times before trusting any one run, was mostly not
+followed (@sec-mistakes). The lecturer then made two points: the
+open-loop square was too complicated a path to say anything clean about, and
+the useful question was simpler. *Drive the robot forward fifty times, and see
+whether the twin falls within the robot's own variation.* A single run cannot
+tell a 3 % error from a lucky one; fifty can.
+
+== A different robot
+
+The first robot began restarting itself at random, so the fifty runs were
+made on a second JetBot of the same model, running the first one's SD card.
+Its display was broken and its camera disconnected. A different robot meant
+the twin's measured numbers no longer applied, so it was calibrated afresh,
+from its own bench and spin experiments, before any straight run. None of the
+fifty was used to fit anything.
+
+#table(
+  columns: (1fr, auto, auto, auto),
+  [Number], [Robot 1], [Robot 2], [From],
+  [Driver chip], [TB6612FNG], [TB6612FNG], [driver-chip test],
+  [Cell resistance], [0.0575 Ω], [0.0742 Ω], [load step],
+  [5 V path resistance], [0.49 Ω], [0.52 Ω], [load step],
+  [Jetson supply under CPU load], [4.50 V], [4.52 V], [load step],
+  [Winding resistance], [3.45 Ω], [3.15 Ω], [stall],
+  [Motor speed at 6 V], [255 rpm], [249 rpm], [wheels-up sweep, 0.1 to 0.6],
+  [Motor no-load current], [0.197 A], [0.111 A], [the same],
+  [Caster friction], [0.324], [0.506], [spins (robot 2: spins only)],
+  [Gearbox efficiency], [0.514], [0.514, robot 1's], [not refitted],
+)
+
+Three things came out of the calibration itself.
+
+- *The Jetson's supply sags below specification on both robots* (4.50 and
+  4.52 V), so that earlier finding is a property of the design, not of one
+  unit.
+- *Robot 2's wheel speed flattens above a command of 0.6*: about 49 rpm per
+  0.1 of command up to 0.6, and 27 above. The twin's motor model rises in a
+  straight line and cannot follow this, so the motors were fitted over 0.1
+  to 0.6 only, the range the straight runs use. There the twin is within
+  1.1 %, and 0.8 % at 0.5.
+- *Robot 2's caster drags about half again as much as robot 1's* on the same
+  tiles. Caster balls vary between units.
+
+Gearbox efficiency was kept from robot 1 because a spin is one number and
+cannot settle two. It had been fitted partly on robot 1's straight run, which
+is a different robot, so robot 2's straights stay unused.
+
+== The test, fixed in advance
+
+Before the first run, the twin's prediction and the test were written down
+and committed (`results/robot2/PREREGISTRATION.md`). The experiment is
+`straight_short`: a command of 0.5 on both wheels for 1.5 s, from rest, on the
+50 cm tiles. The twin predicted 1.057 m at a full pack, with no drift and no
+turn. Each real run is compared with the twin replayed on that run's own
+battery voltage and command timings.
+
++ *Spread test (pass or fail).* Zero must lie inside the middle 95 % of the
+  fifty residuals, robot minus twin: the twin is no further from the robot
+  than the robot is from itself.
++ *Bias*, with a 95 % interval over the batch means.
++ *Spread within and between batches* of five.
++ *Drift and heading*, which the twin puts at zero, reported but not tested.
+
+Runs could be excluded only if marked bad at the time, for a stated reason,
+and never for their distance. Two amendments were made, both dated and both
+before any run was measured: the drive time was cut from 2.0 to 1.5 s to keep
+the run in the camera's view, and all ten batches were made in one session
+for lack of time, so "between batches" means between sittings, not days.
+
+== Measuring fifty runs from video
+
+Each batch of five was one top-down video, 30 fps, from a phone 1.01 m above
+the floor, with the robot carried back to its mark between runs. A new tool,
+`straights_video.py`, was written for this.
+
+- *The ruler* is the tile joints. The twelve crossings land on a 0.5 m grid to
+  2.4 mm RMS. The ultra-wide lens's bending is corrected where the robot
+  drives: the joint beside its path is straight to 0.4 px over 1200 px.
+- *Which runs.* Being carried back covers much the same distance as a run, so
+  runs are picked by timing instead: the bursts of motion whose spacing
+  matches the logs' spacing on the robot's clock. Every run starts within
+  0.06 s of where its log says.
+- *Where the robot is.* At rest before and after each run, the whole robot,
+  picked out as what differs between the two still frames, with thin parts
+  such as the antenna removed.
+- *Height.* The camera sees the robot from above, not its wheels on the
+  floor, and seen from 1 m anything raised appears to move too far. The
+  correction was calibrated against the robot's lit LED, 8.5 cm above the
+  floor by ruler, in the 22 runs where it shows at both ends: the outline
+  behaves as a point 5.3 cm up (standard deviation 0.6 cm over runs), so
+  every distance is multiplied by 0.9475. The remaining uncertainty is about
+  ±0.5 %.
+
+#warn[The first analysis took the outline's height from the robot's parts
+list (8.7 cm) and reported a bias of +2.2 %. The LED showed that estimate was
+too high: at the start mark, near the edge of the picture, the camera also
+sees the robot's low side panels and wheels. The numbers below replace it.
+Nothing was fitted to the twin.]
+
+== The result
+
+#fig("../results/robot2/straights_result.png",
+  [Robot 2's fifty straights against the twin. Left: robot minus twin. Middle:
+   the same through the session. Right: drift against turn, which the twin
+   puts at (0, 0). Two turn readings, 147° and 92°, are misreads by the tool;
+   drift and turn are good to about 5 cm and a few degrees.])
+
+#table(
+  columns: (1fr, auto),
+  [Planned test], [Result],
+  [1. Spread: middle 95 % of robot minus twin], [−6.6 to +11.7 cm: *passes*],
+  [2. Bias, 95 % interval over batch means], [+6.3 cm (+6.0 %), +4.6 to +8.0 cm],
+  [3. Spread within batches; of batch means], [5.5 cm; 2.4 cm (2.4 expected by chance)],
+  [4. Drift; turn], [10 cm left on average; 16° anticlockwise on average],
+)
+
+The robot went 1.120 m on average and the twin predicted 1.056 m. By the test
+fixed in advance, the twin passes. But the result has to be read with what
+the plan did not anticipate.
+
+== What the plan did not anticipate: the robot swerves
+
+In 10 of the 50 runs the robot swerved hard to its left, ending 26 to 49 cm to
+the left and turned 30° to 60°. The frames show open floor: it hit nothing.
+The other 40 went nearly straight, and most of the swerves came in the second
+half of the session. Splitting the runs this way was decided after seeing the
+data, so it is reported as a finding, not as the test.
+
+#table(
+  columns: (auto, auto, auto, auto, 1fr),
+  [Runs], [Number], [Robot], [Twin], [Robot minus twin],
+  [Went straight], [40], [1.144 m, sd 1.8 cm], [1.057 m], [+8.7 cm (+8.2 %), every run],
+  [Swerved], [10], [1.024 m], [1.055 m], [−3.1 cm (−2.9 %)],
+)
+
+*The planned test passes because of the swerves.* They widen the robot's
+spread enough to take in the twin. On the forty runs that went straight, the
+robot repeats itself to 1.8 cm and the twin is short by about 8 % every time;
+on those alone the spread test would fail. The batches did not differ beyond
+chance, but they were made within 23 minutes, so this says nothing about
+day-to-day change.
+
+== Why the twin falls short: one number for the caster
+
+The twin treats the caster as a ball that always drags, with one friction
+coefficient. On robot 2 that coefficient was fitted to the spins, where the
+caster is dragged sideways. Driving straight, a caster ball rolls. The check
+below was made after seeing the data, on one run's own timing and voltage,
+and nothing was refitted.
+
+#table(
+  columns: (1fr, auto),
+  [The twin's caster drag], [The twin's distance],
+  [0.506, fitted to robot 2's spins], [1.061 m],
+  [0.324, robot 1's], [1.113 m],
+  [0.02, a caster rolling freely], [1.198 m],
+  [*Robot 2's straight runs, measured*], [*1.144 m*],
+)
+
+Gearbox efficiency barely matters by comparison: 10 % more adds 7 mm. The
+robot sits between "dragged as in a spin" and "rolling freely", as a caster
+that mostly rolls would. One coefficient cannot describe both, so a
+calibration made on spins carries badly to straight driving. On robot 1 this
+was hidden: gearbox efficiency and caster friction were fitted together on
+its straight run and its spin, and between them absorbed the difference,
+which is why gearbox efficiency moved further than a gearbox plausibly would.
+
+The swerves are a second limit. The twin's motors are identical and its tyres
+cannot slide sideways, so it cannot produce one. Something on the robot
+changes from run to run: the direction the rear caster faces when the robot
+is put down by hand, one wheel starting late, or the tile joints. Which, is
+not established.
 
 = What changed in the twin
 
@@ -973,6 +1174,7 @@ by the robot, or by the person at the bench.
   [It logged at 3.5 Hz instead of 50, because the Jetson's power monitor is slow to read], [The first log],
   [It wrote PWM registers as a block, which the chip ignores without a mode bit: the motors never moved], [The driver-chip test moved nothing],
   [It timed the motors in the same loop that read the sensors, so a 290 ms turn could last 362 ms], [The ten short turns: angle followed duration],
+  [Its CPU-load processes inherited its stop handler, and when stopped they talked to the PWM chip over the shared I²C file, so for the rest of the run the battery readings came from the PWM chip's registers (29.04 V). On robot 1 it spoiled 23 samples, outside the fitted window], [Robot 2's load step: the readings were impossible],
 )
 
 == In measuring from video
@@ -985,6 +1187,10 @@ by the robot, or by the person at the bench.
   [Heading by matching each frame to the last: gave 1.8 turns], [Two estimates within the tool disagreed],
   [The floor grid followed a shadow's edge: one side of the square came out at 0.91 m and 1.18 m/s], [The speed was impossible],
   [A video in which the phone followed the robot], [The tool's built-in check failed: joints landed 8 cm from whole tiles. No result was reported],
+  [Wheel speed from a slow-motion video that dropped and repeated frames partway through], [The holds, 3 s apart on the robot's clock, came out 2.5 s apart in frames. Refilmed at a steady 60 fps],
+  [Counting robot 2's spin turns automatically, two ways: the outline looks alike a third of a turn round], [Both gained or lost a whole turn on robot 1's videos, whose answer was known. Turns are now counted by eye],
+  [Following robot 2 by its green chassis alone: about 10 cm short, because different parts of it catch the light at each end], [Checked against the tile joints by hand],
+  [Correcting for the robot's height with an estimate from its parts list (8.7 cm)], [Its own LED, at a height measured by ruler, showed the outline acts as 5.3 cm: every distance had been 4 % short],
 )
 
 == In the model's geometry
@@ -1007,6 +1213,8 @@ silently again. The build now runs nineteen and writes nothing if one fails.
   [The pack was nearly flat when first measured], [Its resistance was fitted at twice the charged value; refitted after charging],
   [The robot lost power abruptly, once, while idle and charging], [Unexplained. The log shows no shutdown; candidates are a cell or switch contact, or the protection chip],
   [Tape left on the left tyre through the first floor tests], [Noticed at the bench. Tests repeated; the tape turned out to have been hiding the motor mismatch],
+  [Robot 1 began restarting itself at random], [Replaced by robot 2 for the fifty runs. Not diagnosed],
+  [Robot 2's I²C bus jammed after about twelve minutes, and a reboot did not clear it, because the expansion board stays powered], [A full power-off cleared it; the stock display service, polling the broken display, was switched off. It did not recur],
 )
 
 = What the twin is good for
@@ -1015,8 +1223,11 @@ silently again. The build now runs nineteen and writes nothing if one fails.
 
 - *Electrical budget and margins.* Rail voltages under load, including the
   sag at the Jetson, once the 5 V path resistance is included.
-- *Steady motion.* How fast the wheels turn for a given command, how far the
-  robot goes in a given time, how fast it spins: to a few percent.
+- *Steady motion, calibrated on the same kind of motion.* How fast the wheels
+  turn for a given command, how fast the robot spins: to a few percent. How
+  far it goes in a straight line was within 3 % on robot 1, where the drag
+  numbers were fitted on a straight run as well as a spin, and 8 % short on
+  robot 2, where they were fitted on spins alone.
 - *Transient timing.* How long the wheels take to spin up and to stop.
 - *Design questions.* What happens with the other driver chip, a flat pack,
   a stalled motor, a failed part.
@@ -1025,9 +1236,14 @@ silently again. The build now runs nineteen and writes nothing if one fails.
 
 - *Open-loop paths with short turns.* The robot does not repeat them, so no
   model can predict a single one. The honest output is a distribution.
-- *Straight-line drift.* Not modelled. One number would add it.
-- *The top of the speed range.* The real motor falls away near full command
-  for a reason not yet identified.
+- *Straight-line drift, and the swerves.* Not modelled. Robot 2's fifty runs
+  show the drift is not one steady motor mismatch: most runs go nearly
+  straight and a fifth swerve hard left. One number would not add it.
+- *Carrying a calibration from one kind of motion to another.* Its caster has
+  one drag coefficient, which cannot describe both a caster dragged sideways
+  in a spin and one rolling straight.
+- *The top of the speed range.* The real motor falls away near full command,
+  on robot 2 from a command of 0.6, for a reason not yet identified.
 - *A pack that is not fully charged.* Its resistance changes and the twin's
   does not.
 
@@ -1041,12 +1257,25 @@ from rest, says something specific about where the physics of a cheap
 differential-drive robot stops being captured by a lumped model: in the first
 third of a second after a change of direction.
 
+The fifty straights add a second lesson. The test fixed in advance was
+passed, and the pass was real, but it was not the whole story: the spread
+that let the twin pass came from swerves the twin cannot make, and on the
+runs it can describe it was consistently short. A pass/fail test is only as
+informative as the variation it is measured against. And the cause, once
+found, was a single number asked to describe two different things.
+
 = Limits of this work
 
-- One robot, one floor, one day. Nothing here says how another JetBot
-  would behave.
-- Most quantities were measured once or twice. The exceptions are the short
-  turn (24 times) and the wheels-up sweep (twice).
+- Two robots, one floor. Robot 2's fifty runs were made in one session of
+  23 minutes, so they say nothing about day-to-day change, and the breaks
+  between batches were shorter than planned.
+- On robot 1 most quantities were measured once or twice; the exceptions are
+  the short turn (24 times) and the wheels-up sweep (twice). On robot 2 the
+  straight was run fifty times, but each bench experiment once or twice.
+- The split of robot 2's runs into straight and swerved, and the caster
+  check, were decided after seeing the data.
+- Robot 2's drift and turn readings are rough, to about 5 cm and a few
+  degrees, and robot 2's gearbox efficiency is robot 1's.
 - The twenty-four short turns were made with the tape on. The tape made
   little difference to the spin, but that has not been shown for short turns.
 - Motor current was never measured directly. Every statement about current
@@ -1059,9 +1288,14 @@ third of a second after a change of direction.
 
 + *Separate the two explanations for the corners.* A turn after a long pause
   against a turn straight after a side, and right turns as well as left.
-+ *Add the motor mismatch*, from more than one straight run.
-+ *A caster model whose drag depends on how long it has been sliding*, to
-  see whether one model can match both the short turn and the long spin.
++ *A caster that rolls along its direction of travel and scrubs sideways*,
+  with a drag that depends on how long it has been sliding: the change robot
+  2's straights point to, and a candidate for the corners too. Fit it on the
+  spins and test it on the existing fifty straights.
++ *Find what makes the robot swerve.* Film the caster close up as runs start,
+  and put the robot down with the caster deliberately set each way.
++ *Repeat the fifty straights on another day*, with a marker of measured
+  height on the robot, to get the day-to-day spread.
 + *Pack resistance as a function of charge.*
 + *Holds at 0.85, 0.9 and 0.95*, to see whether the bend at the top of the
   speed range is gradual or sudden.
@@ -1084,6 +1318,7 @@ third of a second after a change of direction.
   [`square_small`], [as `square` with sides of 0.6 s],
   [`short_turns`], [ten times: (0.29, −0.3, 0.3), (1.2, 0, 0)],
   [`short_turns_24`], [the same, twenty-four times],
+  [`straight_short`], [(1, 0, 0), (1.5, 0.5, 0.5), (2, 0, 0); robot 2, fifty times],
 )
 
 #heading(numbering: none)[Appendix B: where the evidence is]
@@ -1101,6 +1336,10 @@ third of a second after a change of direction.
   [Square paths], [`results/2026-10-04/square_result.json`, `square_small_result.json`],
   [Fitted values], [`results/calibrated.json`, `results/2026-10-04/floor_fit.json`],
   [The full running account], [`docs/RESULTS.md`],
+  [Robot 2's calibration and its notes], [`results/calibrated_robot2.json`, `data/real/robot2-2026-10-22/NOTES.md`],
+  [Robot 2's test plan and prediction, fixed beforehand], [`results/robot2/PREREGISTRATION.md`, `prediction_straight.json`],
+  [Robot 2's fifty runs: logs and per-run measurements], [`data/real/straights_robot2/`],
+  [Robot 2's results], [`results/robot2/RESULTS.md`, `straights_result.json`],
 )
 
 #heading(numbering: none)[Appendix C: sources]
