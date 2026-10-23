@@ -195,6 +195,24 @@ did not fit was not on the list: short turns, and the top of the speed range.
 And the advice on repeatability was mostly not followed; only the short turn
 (24 times) and the wheels-up sweep (twice) were repeated.
 
+It was followed later, on a second robot: 50 repeated straights against a
+test plan fixed beforehand, in batches of 5 with `tools/straights.py`
+([results/robot2/PREREGISTRATION.md](../results/robot2/PREREGISTRATION.md),
+[results/robot2/RESULTS.md](../results/robot2/RESULTS.md)). Lessons for doing
+it again:
+
+- **Film normal video, not slow motion,** for anything timed. The phone's
+  slow-motion mode dropped and repeated frames partway through a sweep.
+  60 fps was steady.
+- **Know the height of what the camera tracks.** Seen from 1 m, the robot's
+  top moves about 9 % further than its wheels. Robot 2's lit LED, measured
+  by ruler, calibrated that; a sticker at a measured height on the robot's
+  top would do it from the start.
+- **Keep the start mark well inside the picture,** away from anything dark
+  the robot can merge with.
+- **The robot swerves now and then.** Plan for it: decide beforehand how
+  such runs will be treated.
+
 ## The predictions, as they were before the session
 
 `python -m jetbot_twin predict` draws 40 robots from the uncertainty in

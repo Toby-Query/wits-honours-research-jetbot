@@ -42,12 +42,21 @@ with someone resetting the robot in between):
   moves the distances by under 5 mm. Following the green chassis alone was
   tried first and was about 10 cm short: only parts of it catch the light,
   and different parts at each end.
-- **Height.** The camera sees the robot's top, not its wheels on the floor,
-  so every distance looks too long by H / (H - h). Weighting the robot's
-  top-view parts by area (hardware.py) gives h = 8.7 cm, so the distances are
-  multiplied by 0.914. **This is the largest uncertainty in the measurement.**
-  With h from 7 to 10 cm, every distance moves by about +/-1.6 % (+/-1.7 cm).
-  A marker of known height on the robot would remove it.
+- **Height.** The camera sees the robot from above, not its wheels on the
+  floor, so every distance looks too long by H / (H - h), with H = 1.01 m
+  the phone's height. The h that applies to the whole outline was
+  **calibrated against robot 2's lit green LED**, measured by ruler at
+  8.5 cm above the floor (the fan top is 12.4 cm). The tool finds the LED to
+  a fraction of a pixel in the same still frames. It is hidden behind the
+  antenna in some positions, and clearly in view at both ends in 22 runs.
+  On those runs, the outline's distances match the LED's if the outline is
+  taken as **5.3 cm** up (sd 0.6 cm over runs; 5.0 cm for runs that went
+  straight, 5.9 cm for those that swerved). It is lower than the robot's top
+  because at the start mark, near the edge of the picture, the camera also
+  sees the side panels and wheels. So the distances are multiplied by 0.9475.
+  The range 5.0 to 5.9 cm moves them by +/-0.5 %. (A first estimate from the
+  parts list alone, 8.7 cm, was too high: it understated every distance by
+  about 3.7 %.)
 - **Drift and turn** are measured against the direction of the first 0.3 m of
   travel, which is sensitive: re-measuring with a slightly different tracker
   moved them by up to 5 cm and several degrees. Two turns (runs 21 and 49:
@@ -57,47 +66,65 @@ with someone resetting the robot in between):
 
 | Test | Result |
 |---|---|
-| 1. Spread: middle 95 % of (robot - twin) | -10.1 to +7.5 cm: **zero is inside, PASS** |
-| 2. Bias, 95 % interval over batch means | **+2.4 cm (+2.2 %)**, +0.7 to +4.0 cm (over runs: +0.9 to +3.9) |
-| 3. Spread within batches / of batch means | 5.3 cm / 2.3 cm (2.4 expected if batches did not differ) |
-| 4. Drift / turn (twin: 0 / 0) | +9.8 cm left (+5.5 to +14.1) / +15.8 deg (+7.4 to +24.2), rough |
-| Through the session | residual falls 1.6 cm over the 50 runs |
+| 1. Spread: middle 95 % of (robot - twin) | -6.6 to +11.7 cm: **zero is inside, PASS** |
+| 2. Bias, 95 % interval over batch means | **+6.3 cm (+6.0 %)**, +4.6 to +8.0 cm (over runs: +4.8 to +7.9) |
+| 3. Spread within batches / of batch means | 5.5 cm / 2.4 cm (2.4 expected if batches did not differ) |
+| 4. Drift / turn (twin: 0 / 0) | +10.2 cm left (+5.7 to +14.7) / +15.8 deg (+7.4 to +24.2), rough |
+| Through the session | residual falls 1.7 cm over the 50 runs |
 
-Robot 1.080 m mean (sd 5.3 cm, range 0.90 to 1.14); twin 1.056 m.
-
-With h at the ends of its range, the spread test passes both ways and the
-bias is +0.8 cm (-0.8 to +2.5) at 10 cm and +4.3 cm (+2.7 to +6.0) at 7 cm.
+Robot 1.120 m mean (sd 5.5 cm, range 0.93 to 1.18); twin 1.056 m. With the
+outline's height at the ends of its range (5.0, 5.9 cm) the bias is +6.7 and
++5.6 cm, and the spread test passes both ways. The 22 runs measured by the
+LED alone give +3.9 cm (+3.7 %), as their mix of straight and swerved runs
+would.
 
 The batches did not differ from one another beyond what five runs each would
-give by chance (2.3 against 2.4 cm). That is in one session, though, so it
+give by chance (2.4 against 2.4 cm). That is in one session, though, so it
 says nothing about day-to-day change.
 
 ## What the plan did not anticipate: the robot swerves
 
-In 9 of the 50 runs (9, 17, 27, 31, 33, 35, 36, 42, 46), the robot swerved
-hard to its left: it ended 28 to 52 cm to the left, turned 30 to 60 deg,
+In 10 of the 50 runs (9, 17, 27, 31, 33, 35, 36, 40, 42, 46), the robot
+swerved hard to its left: it ended 26 to 49 cm to the left, turned 30 to 60 deg,
 and stopped in the shaded strip along the bottom of the picture. It did not
-hit anything (the frames show open floor there). The other 41 went nearly
-straight. Seven of the nine swerves were in the second half of the session.
+hit anything (the frames show open floor there). The other 40 went nearly
+straight. Most of the swerves were in the second half of the session. (The
+line at 25 cm is where the gap between the two groups falls; run 40, at 26
+cm, is the one nearest it.)
 
 **This analysis was decided after seeing the data**, so it is a finding to
 report, not a replacement for the planned test:
 
 | | Runs | Robot | Twin | Robot - twin, mean (95 %) | Middle 95 % of residuals |
 |---|---|---|---|---|---|
-| Went straight | 41 | 1.102 m, sd 1.9 cm | 1.057 m | **+4.5 cm (+4.3 %)**, +3.9 to +5.1 | +1.2 to +7.5 cm |
-| Swerved | 9 | 0.980 m, sd 4.1 cm | 1.055 m | -7.5 cm (-7.1 %), -10.2 to -4.7 | -14.3 to -1.6 cm |
+| Went straight | 40 | 1.144 m, sd 1.8 cm | 1.057 m | **+8.7 cm (+8.2 %)**, +8.1 to +9.3 | +5.3 to +11.7 cm |
+| Swerved | 10 | 1.024 m, sd 4.8 cm | 1.055 m | -3.1 cm (-2.9 %), -6.6 to +0.4 | -10.9 to +3.8 cm |
 
 What this says:
 
 1. **The planned spread test passes because of the swerves.** They widen the
-   robot's spread enough to take in the twin. On the runs that went straight,
-   the robot is repeatable to 1.9 cm, and the twin is short by 4.3 % every
-   time. On those alone, the spread test would fail.
-2. **The twin under-predicts straight-line distance by about 4 %** (2.6 to
-   6 % across the height uncertainty). The likeliest causes are numbers that
-   were not fitted to robot 2: gear_eff (taken from robot 1), rolling
-   resistance (assumed), and the motor fit's 0.8 % at 0.5.
+   robot's spread enough to take in the twin. On the runs that went
+   straight, the robot is repeatable to 1.8 cm, and the twin is short by
+   8.2 % every time. On those alone, the spread test would fail.
+2. **The twin under-predicts straight-line distance by about 8 %, and the
+   caster model is why.** The twin treats the caster as a ball that always
+   drags, with one friction number, mu_caster. That number was fitted to the
+   spins, where the caster really is dragged sideways (0.506). Driving
+   straight, a caster ball rolls. Checked on run 11's own timing and voltage
+   (this was done after seeing the data, and nothing was refitted):
+
+   | Twin's caster drag | Twin's distance |
+   |---|---|
+   | 0.506, fitted to robot 2's spins | 1.061 m |
+   | 0.324, robot 1's | 1.113 m |
+   | 0.02, rolling freely | 1.198 m |
+   | robot 2's straight runs, measured | 1.144 m |
+
+   gear_eff, by contrast, barely matters here: 10 % more adds 7 mm. So a
+   single caster number cannot serve both a spin and a straight run, and
+   calibrating it on spins carries badly to straight driving. A caster that
+   rolls along its direction of travel and scrubs sideways would need two
+   numbers, or a model of the ball itself.
 3. **The twin cannot produce a swerve at all**: its two motors are
    identical and its tyres do not slip sideways. Something in the robot
    changes from run to run: the rear caster's direction when the run starts
@@ -105,9 +132,18 @@ What this says:
    joints. Which one is not known. The swerves becoming more frequent through
    the session points to something that changes with use or placement.
 
-## To do, if there is time
+## Departures from the plan
 
-- A marker of known height on the robot, or the camera higher, to remove the
-  height uncertainty.
+- Distances were measured with `tools/straights_video.py`, not
+  `tools/path_video.py` as the plan said: each video holds a batch of runs
+  with someone resetting the robot in between, which path_video cannot
+  handle. The method is described above.
+- The breaks between batches were 30 to 90 s, not 5 to 10 minutes.
+- The height correction was calibrated against the LED after the first
+  analysis, and the numbers above replace that first analysis (which, with
+  h = 8.7 cm from the parts list, gave a bias of +2.2 %). The LED's height
+  was measured by ruler and nothing was fitted to the twin.
+
+## To do, if there is time
 - Film a few runs close up at the start, to see what the caster does when
   a swerve begins.

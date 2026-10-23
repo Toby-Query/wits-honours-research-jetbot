@@ -39,13 +39,16 @@ from jetbot_twin.twin import Log  # noqa: E402
 
 DATA = ROOT / "data" / "real" / "straights_robot2"
 OUT = ROOT / "results" / "robot2"
-# The robot's "height" as the camera sees it: its top-view parts weighted by
-# how much of each shows (hardware.py: Jetson and heatsink 64 cm2 at 11.1 cm,
-# fan 16 at 12.2, camera holder 10 at 12, expansion board edge 15 at 5.9,
-# chassis edge 34 at 5.3, wheels 30 at about 5.5). With the phone at 1.01 m
-# that acts as one point 8.7 cm up. Not exact: 7 to 10 cm is the range shown.
-TOP_HEIGHT = 0.087
-TOP_RANGE = (0.07, 0.10)
+# The robot's "height" as the camera sees it, for the whole-outline method.
+# Calibrated against robot 2's lit green LED (8.5 cm above the floor, by
+# ruler), in the 22 runs where the LED shows at both ends: the outline's
+# distances match the LED's if the outline is taken as 5.3 cm up (sd 0.6 cm
+# over runs; 5.0 for runs that went straight, 5.9 for those that swerved).
+# It is lower than the robot's top because at the start mark, near the edge
+# of the picture, the camera also sees the side panels and wheels. A first
+# estimate from the parts list alone (8.7 cm) was too high.
+TOP_HEIGHT = 0.053
+TOP_RANGE = (0.050, 0.059)
 
 
 def t95(dof):

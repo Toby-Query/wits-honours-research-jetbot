@@ -19,6 +19,9 @@ video, so this is separate from it and leaves it as it was.
   is faster, shorter and the other way. The runs found are matched in order
   to the batch's logs, and the gaps between them are checked against the
   gaps between the logs, so a wrong match shows.
+- **The LED.** Robot 2's lit green LED is also found in the same still
+  frames: one small point at one known height (8.5 cm), so its distances
+  can be corrected for height exactly. Both are recorded.
 - **Each run** is measured from the robot at rest just before it starts and
   just after it stops. "Ahead" is the way it first moves. Distance is how
   far ahead it ended, drift how far to its left (negative: right), and the
@@ -49,6 +52,7 @@ TOP_HEIGHT = 0.087      # m: robot 2's effective height seen from above, its
                         # parts weighted by area (tools/straights_analysis.py)
 HALF = 0.5              # the robot is looked for at half size
 BODY_OPEN = 31          # px: parts of the robot thinner than this are left out
+LED_MIN = 55
 ROBOT_PX = (7000, 22000)  # px at full size: the robot's body outline, from batch 1
 
 
@@ -164,6 +168,30 @@ def whole_robot(rest, empty, hint, radius=125):
     k2 = 1 + int(np.argmax(st2[1:, cv2.CC_STAT_AREA]))
     ys, xs = np.nonzero(lab2 == k2)
     return float(xs.mean()), float(ys.mean()), int(len(xs))
+
+
+def led(frame, hint, radius=130):
+    """The robot's lit green LED (picture px, sub-pixel), in a still frame:
+    the brightest, greenest spot near the robot, scored as green over red
+    and blue, times brightness.
+    Returns (x, y, peak score) or None."""
+    x0, y0 = int(hint[0]) - radius, int(hint[1]) - radius
+    crop = frame[max(0, y0):y0 + 2 * radius, max(0, x0):x0 + 2 * radius].astype(np.float32)
+    b, g, r = crop[..., 0], crop[..., 1], crop[..., 2]
+    score = (g - np.maximum(r, b)) * (crop.max(axis=2) / 255.0)
+    peak = float(score.max())
+    # Below this it is a bright bit of chassis edge, not the LED: the LED is
+    # hidden behind the antenna or cables in some positions (checked by eye:
+    # the LED scores 60-130 when in view, chassis edges up to about 50)
+    if peak < LED_MIN:
+        return None
+    yy, xx = np.unravel_index(int(np.argmax(score)), score.shape)
+    win = score[max(0, yy - 6):yy + 7, max(0, xx - 6):xx + 7]
+    w = np.clip(win - 0.5 * peak, 0, None)
+    gy, gx = np.mgrid[max(0, yy - 6):yy + 7, max(0, xx - 6):xx + 7]
+    cx = float((w * gx[:win.shape[0], :win.shape[1]]).sum() / w.sum())
+    cy = float((w * gy[:win.shape[0], :win.shape[1]]).sum() / w.sum())
+    return cx + max(0, x0), cy + max(0, y0), peak
 
 
 def main():
@@ -316,6 +344,8 @@ def main():
                                 failed="no robot-sized outline at rest"))
             continue
         (sx, sy), (ex, ey) = to_floor(H, [w0[:2], w1[:2]])
+        l0 = led(before, w0[:2])
+        l1 = led(after, w1[:2])
         gx0, gy0 = np.median(fx[b0:b1]), np.median(fy[b0:b1])
         gx1, gy1 = np.median(fx[a0:a1]), np.median(fy[a0:a1])
         # ahead: the way it first moves (start to 0.3 m along)
@@ -340,16 +370,26 @@ def main():
         # floor y runs down the picture, so counter-clockwise is minus
         turn = -math.degrees((d_end - d_start + math.pi) % (2 * math.pi) - math.pi)
         scatter = 1e3 * float(np.hypot(np.std(fx[b0:b1]), np.std(fy[b0:b1])))
+        # the same from the LED, as seen (not corrected for height: the
+        # analysis does that, with the LED's own measured height)
+        led_X = led_Y = None
+        if l0 is not None and l1 is not None:
+            (lx0, ly0), (lx1, ly1) = to_floor(H, [l0[:2], l1[:2]])
+            led_X = float((lx1 - lx0) * c_ + (ly1 - ly0) * s_)
+            led_Y = float(-(-(lx1 - lx0) * s_ + (ly1 - ly0) * c_))
         results.append(dict(log=Path(a.logs[k]).name, video_start_s=float(t[s]),
                             distance_m=float(X), drift_m=float(Y), heading_deg=turn,
                             rest_scatter_mm=scatter, motors_on_s=dur_on,
                             robot_px_before_after=[w0[2], w1[2]],
+                            led_distance_seen_m=led_X, led_drift_seen_m=led_Y,
+                            led_peak_before_after=[l0 and l0[2], l1 and l1[2]],
+                            distance_seen_m=float(X / scale), drift_seen_m=float(Y / scale),
                             green_vs_whole_shift_mm=float(1e3 * (math.hypot(gx1 - gx0, gy1 - gy0)
                                                                  - math.hypot(ex - sx, ey - sy))),
                             frames_without_robot=int((~good[b0:a1]).sum())))
         print(f"  {Path(a.logs[k]).name}: {X:.3f} m ahead, {Y * 100:+.1f} cm left, "
-              f"turned {turn:+.1f} deg (robot {w0[2]}/{w1[2]} px before/after; the "
-              f"green alone said {math.hypot(gx1 - gx0, gy1 - gy0) * scale:.3f} m)")
+              f"turned {turn:+.1f} deg; LED {('%.3f m' % led_X) if led_X is not None else 'not found'} "
+              f"as seen")
     if a.out:
         Path(a.out).write_text(json.dumps({
             "video": a.video, "fps": fps, "camera_height_m": a.camera_height,

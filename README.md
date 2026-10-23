@@ -21,12 +21,16 @@ web/            the live 3D view
 | JetBot circuit | transcribed from Waveshare's schematic |
 | JetBot geometry | Waveshare's own CAD, measured and converted |
 | Dynamics | working |
-| **Compared with the real robot** | **one session, 2026-10-04: ten experiments, from the bench to a held-out square on the floor.** See [docs/RESULTS.md](docs/RESULTS.md), or [report/report.pdf](report/report.pdf) for the whole project |
+| **Compared with the real robot** | **robot 1, 2026-10-04: ten experiments, from the bench to a held-out square on the floor.** See [docs/RESULTS.md](docs/RESULTS.md), or [report/report.pdf](report/report.pdf) for the whole project |
+| **A second robot** | **robot 2, 2026-10-22/23: calibrated on its own, then 50 repeated straight runs against a test plan fixed beforehand.** See [results/robot2/RESULTS.md](results/robot2/RESULTS.md) |
 
-In one line: the twin predicts steady motion to a few percent (straight-line
-distance within 3 %, a two-second spin within 6 %, both predicted before the
-run) and does not predict short open-loop turns, which the robot itself does
-not repeat.
+In one line: on robot 1 the twin predicted steady motion to a few percent
+(straight-line distance within 3 %, a two-second spin within 6 %, both before
+the run) and did not predict short open-loop turns, which the robot itself
+does not repeat. On robot 2, over 50 repeated straights, the twin falls inside
+the robot's own spread (the planned test), but the robot goes 6 % further on
+average, and 8 % further on the 40 runs that went straight, because the
+twin's caster drag, fitted to spins, is too high for rolling straight.
 
 The motors, the driver chip, the pack and the floor drag have been measured on
 this robot. 50 numbers are still estimates, among them the robot's mass.
@@ -102,6 +106,23 @@ The same experiment definition runs on both, both produce a log with the same
 columns, and `compare` lays one over the other. See
 [docs/VALIDATION.md](docs/VALIDATION.md).
 
+A calibration made for one robot is applied with `--calibration`, e.g.
+`--calibration results/calibrated_robot2.json`.
+
+The repeated straights on robot 2:
+
+```bash
+.venv/bin/python tools/straights.py       # one run per press of Enter, 5 a batch
+                                          # (or double-click "Drive straights.command")
+.venv/bin/python tools/straights_video.py data/real/straights_robot2/batch01.mp4 \
+    data/real/straights_robot2/straight_0{1,2,3,4,5}.csv \
+    --out data/real/straights_robot2/batch01_video.json   # each batch's video
+.venv/bin/python tools/straights_analysis.py --camera-height 1.01
+```
+
+The videos (about 3 GB) are not in git; the per-run measurements taken from
+them are.
+
 ## The framework on its own
 
 ```bash
@@ -162,6 +183,30 @@ See [docs/RESULTS.md](docs/RESULTS.md).
   one number for it.
 - **The two motors differ by about 2.6 %**, from one straight run. The twin's
   are identical, so it predicts no drift.
+- **A second robot of the same model differs measurably.** Robot 2's pack
+  resistance is 29 % higher, its winding resistance 9 % lower, and its caster
+  drags about half again as much on the same tiles. Its wheel speed flattens
+  above a command of 0.6, which the twin's motor model cannot follow, so its
+  motors were fitted on 0.1 to 0.6 only.
+  [data/real/robot2-2026-10-22/NOTES.md](data/real/robot2-2026-10-22/NOTES.md)
+- **Robot 2's Jetson supply sags below 4.75 V under load too** (4.52 V), so
+  that finding is the design, not one unit.
+- **Over 50 straights, the twin passes the planned test but under-predicts
+  distance.** Robot 1.120 m on average, twin 1.056 m (+6.0 %, interval +4.6
+  to +8.0 cm); zero is inside the middle 95 % of robot-minus-twin, so the
+  preregistered spread test passes. But 10 runs swerved hard left, and those
+  widen the spread: on the 40 that went straight the robot repeats to 1.8 cm
+  and the twin is 8.2 % short every time.
+  [results/robot2/RESULTS.md](results/robot2/RESULTS.md)
+- **One caster number cannot serve both a spin and a straight run.** The
+  twin's caster always drags. Fitted to the spins, where it is dragged
+  sideways, it holds the robot back too much when it should be rolling: on
+  the same run the twin gives 1.061 m with the spin's drag, 1.198 m with a
+  freely rolling caster, and the robot did 1.144 m.
+- **The robot swerves now and then, and the twin cannot.** 10 of 50
+  identical runs ended 26 to 49 cm to the left, most of them in the second
+  half of the session. The cause (the caster's direction when the robot is
+  put down, a wheel starting late, the tile joints) is not established.
 - **How long a motor command lasts varied by tens of milliseconds**, because
   it is fourteen I²C writes from Python, and a quarter-turn moved 5° for every
   10 ms. The stock `jetbot` library sends commands the same way.
@@ -179,10 +224,12 @@ See [docs/RESULTS.md](docs/RESULTS.md).
 | [jetbot_twin/compare.py](jetbot_twin/compare.py), [calibrate.py](jetbot_twin/calibrate.py) | twin against robot |
 | [jetbot_twin/predict.py](jetbot_twin/predict.py) | predictions with uncertainty |
 | [robot/agent.py](robot/agent.py) | runs on the JetBot |
-| [tools/](tools/) | STEP to GLB, figures, and reading wheel speed, heading and path from video |
+| [tools/](tools/) | STEP to GLB, figures, and reading wheel speed, heading and path from video; `straights*.py` for the repeated straights |
 | [reference/](reference/) | Waveshare's schematic and CAD |
 | [data/real/](data/real/) | logs and hand measurements from the robot |
 | [results/](results/) | predictions, the rehearsal, fits, comparisons |
+| [results/robot2/](results/robot2/) | robot 2: the test plan, prediction and results of the 50 straights |
+| [results/calibrated_robot2.json](results/calibrated_robot2.json) | robot 2's calibration (robot 1's is in hardware.py) |
 | [report/](report/) | the project report |
 
 ## Sources

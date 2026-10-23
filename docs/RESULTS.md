@@ -14,6 +14,11 @@ python -m jetbot_twin --calibrated compare --session 2026-10-04
 wheels-up sweep, the stall, the straight run and spin on the floor, the
 held-out square, and its corner repeated ten times and then twenty-four.
 
+This page is robot 1. A second robot of the same model was calibrated
+separately on 2026-10-22 ([data/real/robot2-2026-10-22/NOTES.md](../data/real/robot2-2026-10-22/NOTES.md))
+and driven straight 50 times against a test plan fixed beforehand
+([results/robot2/RESULTS.md](../results/robot2/RESULTS.md)).
+
 ## What the probe found
 
 | | |
@@ -52,6 +57,13 @@ reading's own scatter at rest (23 mV), so on this experiment the twin is as
 close as the sensor can show. That is one experiment and two fitted numbers;
 it says the pack and rail models have the right form, not that the twin is
 validated.
+
+A fault in the agent, found on 2026-10-22: when the CPU-load processes
+were stopped, they inherited the agent's stop handler and talked to the
+PCA9685 over the shared I2C file, which redirected the main process's
+battery readings to the PCA9685's registers. In this run it cost 23 samples
+(30.16 to 30.44 s, reading 0 or 4.096 V). Both fits above use only readings
+before 29.8 s, so they stand. The agent is fixed.
 
 ### Finding 1: the Jetson's 5 V sags to 4.5 V under load
 
@@ -140,6 +152,11 @@ exactly 3 s apart. Nothing is aliased, and speed within a hold is steady to
 "As designed" is the twin with the motors as originally assumed and only the
 pack fitted. "Calibrated" has the motor's speed constant, friction and the
 split between constant and speed-dependent friction fitted to this table.
+
+`tools/wheel_tape.py` now takes the median step from frame to frame instead
+of a straight-line fit through the angle, so a misread frame cannot add or
+drop a turn (it did on robot 2's slow-motion video). It reproduces the robot
+column above to 1 to 3 %.
 
 **The predictions held.** Against what was recorded beforehand for the
 TB6612FNG ([predictions.txt](../results/predictions.txt)):
@@ -529,7 +546,10 @@ numbers would make it: the robot itself does not repeat those corners.
 
 Why a corner after a side differs from the same turn from rest: turns after a
 longer pause, and to the right as well as the left. The left/right motor
-mismatch, from more than one straight run, added to the twin. The short turns
+mismatch added to the twin (robot 2's 50 straights show the drift is not one
+steady mismatch: most runs go nearly straight and a fifth swerve hard left).
+A caster model that rolls along its direction of travel and scrubs sideways
+(robot 2's results show one drag number cannot do both). The short turns
 repeated without the tape. `step_response`. Extra holds near full command, to look at the bend. And the hand
 measurements: the robot's mass, the wheel's diameter, the cells'
 label.

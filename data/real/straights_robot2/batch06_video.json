@@ -18,6 +18,14 @@
     12741,
     13485
    ],
+   "led_distance_seen_m": null,
+   "led_drift_seen_m": null,
+   "led_peak_before_after": [
+    96.24706268310547,
+    null
+   ],
+   "distance_seen_m": 1.198024034500122,
+   "drift_seen_m": -0.03510622680187225,
    "green_vs_whole_shift_mm": -86.89484284076255,
    "frames_without_robot": 0
   },
@@ -33,6 +41,14 @@
     12943,
     12153
    ],
+   "led_distance_seen_m": 1.0739846229553223,
+   "led_drift_seen_m": 0.39685165882110596,
+   "led_peak_before_after": [
+    97.5058822631836,
+    68.75686645507812
+   ],
+   "distance_seen_m": 1.0463871955871582,
+   "drift_seen_m": 0.42944633960723877,
    "green_vs_whole_shift_mm": -96.3420553211789,
    "frames_without_robot": 0
   },
@@ -48,6 +64,14 @@
     13719,
     14031
    ],
+   "led_distance_seen_m": 1.2632231712341309,
+   "led_drift_seen_m": 0.006644889712333679,
+   "led_peak_before_after": [
+    94.87059020996094,
+    69.64705657958984
+   ],
+   "distance_seen_m": 1.22081458568573,
+   "drift_seen_m": 0.030994005501270294,
    "green_vs_whole_shift_mm": -76.11873115576606,
    "frames_without_robot": 0
   },
@@ -63,6 +87,14 @@
     14048,
     14166
    ],
+   "led_distance_seen_m": null,
+   "led_drift_seen_m": null,
+   "led_peak_before_after": [
+    95.62352752685547,
+    null
+   ],
+   "distance_seen_m": 1.2383103370666504,
+   "drift_seen_m": 0.02881641685962677,
    "green_vs_whole_shift_mm": -88.36589453377219,
    "frames_without_robot": 0
   },
@@ -78,6 +110,14 @@
     14316,
     13287
    ],
+   "led_distance_seen_m": null,
+   "led_drift_seen_m": null,
+   "led_peak_before_after": [
+    111.05882263183594,
+    null
+   ],
+   "distance_seen_m": 1.2214311361312866,
+   "drift_seen_m": -0.0128994882106781,
    "green_vs_whole_shift_mm": -91.46820253921307,
    "frames_without_robot": 0
   }
