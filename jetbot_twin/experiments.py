@@ -97,6 +97,14 @@ EXPERIMENTS = {e.name: e for e in [
         measure=["distance travelled, m", "of that, distance after the motors "
                  "cut, m", "sideways drift, m", "heading change, degrees"]),
     Experiment(
+        "straight_short", [(1.0, 0, 0), (1.5, FLOOR, FLOOR), (2.0, 0, 0)],
+        "As `straight`, with the motors on for 1.5 s instead of 2.0 (about "
+        "1.1 m, two tiles, to keep it in the camera's view). The repeated "
+        "test on robot 2 (results/robot2/PREREGISTRATION.md). Nothing is "
+        "fitted to it.",
+        measure=["distance travelled, m", "sideways drift, m",
+                 "heading change, degrees"]),
+    Experiment(
         "spin", [(1.0, 0, 0), (2.0, -SPIN, SPIN), (2.0, 0, 0)],
         "Spin on the spot, counter-clockwise from above. Count the turns "
         "(tape on the floor under the camera, film from above).",
@@ -198,7 +206,7 @@ def predict_manual(exp, log):
 
     import numpy as np
     n = exp.name
-    if n == "straight":
+    if n.startswith("straight"):
         t_off = holds(exp)[-1][1]
         return {"distance_m": log.final("x"),
                 "coast_m": log.final("x") - log.at("x", t_off),

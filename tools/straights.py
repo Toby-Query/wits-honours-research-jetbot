@@ -1,10 +1,10 @@
-"""Drive the `straight` experiment again and again, one press of Enter each.
+"""Drive the `straight_short` experiment again and again, one press of Enter each.
 
     .venv/bin/python tools/straights.py [-n 5] [--total 50]
 
 The 50 runs are done in batches, a few per sitting (5 by default), so the
 spread includes day-to-day changes as well as run-to-run ones. Each run is
-command 0.5 for 2 s, exactly as `real run straight`. All batches go in one
+command 0.5 for 1.5 s, exactly as `real run straight_short`. All batches go in one
 folder per robot, data/real/straights_robot2/, numbered on from the last run: straight_NN.csv,
 plus a line each in runs.csv (number, batch, time, battery at rest, sag, how
 long the motors were on, and whether you marked it bad). The batch is
@@ -85,7 +85,7 @@ def main():
     ap.add_argument("--quiet", action="store_true", help="no spoken run numbers")
     a = ap.parse_args()
 
-    exp = EXPERIMENTS["straight"]
+    exp = EXPERIMENTS["straight_short"]
     folder = Path(a.folder)
     folder.mkdir(parents=True, exist_ok=True)
     index = folder / "runs.csv"
@@ -93,7 +93,7 @@ def main():
 
     done_before = sum(r["status"] == "ok" and r["batch"] != a.batch for r in rows)
     batches = sorted({r["batch"] for r in rows} | {a.batch})
-    print(f"\nStraights: command 0.5 for 2 s. Batch {batches.index(a.batch) + 1} "
+    print(f"\nStraights: command 0.5 for 1.5 s. Batch {batches.index(a.batch) + 1} "
           f"({a.batch}): {a.n} runs this time; {done_before} of {a.total} "
           "done before today")
     print(f"saving to {folder}")

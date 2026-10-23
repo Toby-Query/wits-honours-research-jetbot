@@ -1,6 +1,8 @@
 # Robot 2, repeated straights: what will be tested, fixed in advance
 
-Written 2026-10-22, before any of robot 2's straight runs. Nothing below is
+Written 2026-10-22, before any of robot 2's straight runs. Amended once on
+2026-10-23, before the 50 started: the drive time went from 2.0 s to 1.5 s so
+the whole run stays in the camera's view (see the end). Nothing below is
 changed after the runs start. Anything decided later is reported as such.
 
 ## The twin being tested
@@ -22,12 +24,12 @@ No robot-2 straight run was used. gear_eff was fitted partly on robot 1's
 straight run of 2026-10-04, which is a different robot.
 
 The twin's prediction, by battery voltage at rest, is in
-`prediction_straight.json`: 1.418 m at 12.2 V, 1.380 m at 11.9 V,
-1.343 m at 11.6 V. It predicts no drift and no turn.
+`prediction_straight.json`: 1.057 m at 12.3 V, 1.029 m at 12.0 V,
+1.002 m at 11.7 V. It predicts no drift and no turn.
 
 ## The runs
 
-- `straight`, command 0.5 on both wheels for 2.0 s, from rest. 50 good
+- `straight_short`, command 0.5 on both wheels for 1.5 s, from rest. 50 good
   runs, in batches of 5, with `tools/straights.py`. The logs go in
   `data/real/straights_robot2/`.
 - The same 50 cm tiles, start mark, direction and camera position each
@@ -71,3 +73,31 @@ distance minus the twin's.
   within 1.1 %.
 - gear_eff, tyre grip and rolling resistance are not robot 2's own.
 - The twin's two motors are identical, so it cannot predict drift.
+
+## Amendment, 2026-10-23 (before the 50 started)
+
+The drive time was cut from 2.0 s to 1.5 s, because about 1.4 m did not fit
+in the camera's view. The experiment is `straight_short` (1 s still, 1.5 s
+at 0.5, 2 s still). The robot is up to speed in about 0.3 s, so most of the
+run is still steady driving. The prediction was remade for 1.5 s with the
+same twin; nothing else changed. The 2.0 s prediction made on 2026-10-22 was
+1.418 m at 12.2 V.
+
+Two practice runs were made around this change and are not part of the 50:
+one at 2.0 s, made before the script was switched, and one at 1.5 s, as a
+check. They are kept in `data/real/straights_robot2_practice/`. Neither was
+looked at for distance before the count was reset to zero.
+
+## Amendment, 2026-10-23 (after batch 1 was recorded, before any run was measured)
+
+All ten batches will be made on 2026-10-23, in one session, instead of on
+separate days: the time was not available. Batches are named 2026-10-23,
+2026-10-23b, 2026-10-23c and so on, with a break of 5-10 minutes between
+them (motors cool) and a fresh placement on the start mark each time.
+
+What this changes: the "between-batch" spread in test 3 is between sittings
+within one day, not between days, so it will understate day-to-day change
+(temperature, floor, tyres). The report says so. Tests 1, 2 and 4 are
+unchanged. Since runs follow one another in one session, the residuals are
+also plotted against run number, to show any steady drift through the
+session (warming motors, the pack running down).
