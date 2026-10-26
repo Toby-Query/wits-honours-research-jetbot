@@ -103,6 +103,13 @@ class Hardware:
     c_rr: float = assumed(0.015, "tyre rolling resistance coefficient")
     mu_caster: float = measured(0.324, "fitted to the spin on a tiled floor, "
                                 "2026-10-04 (was assumed 0.25)")
+    # The caster's resistance along the robot's heading, where the ball rolls.
+    # None: the same as mu_caster, in every direction (the model robot 1 was
+    # calibrated with). Set, mu_caster is the resistance across the heading
+    # only (the ball scrubbed sideways, as in a spin) and this is the rolling
+    # resistance along it. Robot 2's 50 straights showed one number cannot
+    # serve both (results/robot2/RESULTS.md).
+    mu_caster_roll: float = None
 
     # ------------------------------------------------------------------- motor
     # The kit's motors are "TT" gearmotors, 1:48, "idle speed 240 RPM"

@@ -9,7 +9,7 @@ as the real one does.
 What is modelled
     tyre traction with saturation        rolling resistance
     gearbox friction, static and running (inside the wheel equation)
-    caster drag, which opposes turning   weight transfer under acceleration
+    caster drag, rolling and scrubbing   weight transfer under acceleration
     centre of mass off the axle
 
 What is not
@@ -121,12 +121,18 @@ class DiffDrive:
                 s.wr, tau_r - r * Fr - c2 * s.wr * abs(s.wr), self.Jw, h,
                 hw.motor_tau_coulomb + rr_r, hw.motor_tau_static + rr_r,
                 hw.motor_viscous)
-            # caster: a ball that drags, at xc on the centreline
+            # caster: a ball at xc on the centreline
             vcx, vcy = s.v, s.w * xc
-            vc = math.hypot(vcx, vcy)
-            Fc = hw.mu_caster * Nc * math.tanh(vc / 0.01)
-            fcx = -Fc * vcx / vc if vc > 1e-9 else 0.0
-            fcy = -Fc * vcy / vc if vc > 1e-9 else 0.0
+            if hw.mu_caster_roll is None:
+                # one drag, the same in every direction
+                vc = math.hypot(vcx, vcy)
+                Fc = hw.mu_caster * Nc * math.tanh(vc / 0.01)
+                fcx = -Fc * vcx / vc if vc > 1e-9 else 0.0
+                fcy = -Fc * vcy / vc if vc > 1e-9 else 0.0
+            else:
+                # rolls along the heading, scrubs across it
+                fcx = -hw.mu_caster_roll * Nc * math.tanh(vcx / 0.01)
+                fcy = -hw.mu_caster * Nc * math.tanh(vcy / 0.01)
             # body, with the centre of mass a distance d ahead of the axle
             Fx = Fl + Fr + fcx
             Mz = (Fr - Fl) * Wt / 2 + fcy * xc

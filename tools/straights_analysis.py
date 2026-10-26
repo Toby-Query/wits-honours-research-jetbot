@@ -77,6 +77,8 @@ def main():
     ap.add_argument("--top-height", type=float, default=TOP_HEIGHT,
                     help="m, the robot's effective height as seen from above")
     ap.add_argument("--calibration", default=str(ROOT / "results" / "calibrated_robot2.json"))
+    ap.add_argument("--runs", help="only these runs, e.g. 6-50 (the rest were used to fit)")
+    ap.add_argument("--tag", default="", help="suffix for the output files, e.g. refit")
     a = ap.parse_args()
 
     runs = list(csv.DictReader(open(DATA / "runs.csv")))
@@ -93,7 +95,13 @@ def main():
     exp = EXPERIMENTS["straight_short"]
 
     rows = []
+    keep = None
+    if a.runs:
+        lo_, hi_ = (int(x) for x in a.runs.split("-"))
+        keep = range(lo_, hi_ + 1)
     for r in runs:
+        if keep is not None and int(r["run"]) not in keep:
+            continue
         if r["status"] != "ok":
             continue
         v = video.get(r["file"])
@@ -179,12 +187,13 @@ def main():
     run_no = np.array([r["run"] for r in rows])
     slope = np.polyfit(run_no, res, 1)[0]
     vs = np.polyfit([r["rest_v"] for r in rows], res, 1)[0]
-    print(f"  run number: residual changes {slope * 1e3 * 50:+.1f} mm over the 50 runs "
+    print(f"  run number: residual changes {slope * 1e3 * (run_no.max() - run_no.min()):+.1f} mm over runs {run_no.min()}-{run_no.max()} "
           f"(battery {rows[0]['rest_v']:.2f} -> {rows[-1]['rest_v']:.2f} V)")
 
     OUT.mkdir(parents=True, exist_ok=True)
     table = [dict(r, robot_m=float(rb), residual_m=float(e)) for r, rb, e in zip(rows, robot, res)]
-    (OUT / "straights_result.json").write_text(json.dumps(
+    stem = "straights_result" + (f"_{a.tag}" if a.tag else "")
+    (OUT / f"{stem}.json").write_text(json.dumps(
         {"summary": main_out, "drift_m": d, "heading_deg": hh,
          "residual_per_run_slope_m": float(slope), "runs": table},
         indent=1, default=float))
@@ -212,8 +221,8 @@ def main():
                  else "as seen, no height correction")
         fig.suptitle(f"Robot 2, 50 straights against the twin ({title})")
         fig.tight_layout()
-        fig.savefig(OUT / "straights_result.png", dpi=110)
-        print(f"\nwrote {OUT / 'straights_result.json'} and .png")
+        fig.savefig(OUT / f"{stem}.png", dpi=110)
+        print(f"\nwrote {OUT / (stem + '.json')} and .png")
     except ImportError:
         pass
 

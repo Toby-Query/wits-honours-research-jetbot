@@ -120,14 +120,15 @@ The main findings are these.
   The straight-line distance was predicted before the run to within 3 %, a
   two-second spin to within 6 %, and wheel speed across the whole command
   range to within 8 % after calibration.
-- *Over fifty straight runs on the second robot, the twin passes the planned
-  test and still under-predicts.* It falls inside the robot's own spread, as
-  the test required, and the robot goes 6 % further on average. But a fifth
-  of the runs swerved hard to the left, which the twin cannot do, and those
-  widen the spread. On the forty that went straight the robot repeats itself
-  to 1.8 cm and the twin is 8 % short every time. The cause is identified: the
-  twin's caster has one drag coefficient, fitted to spins, where the caster is
-  dragged; driving straight, it rolls.
+- *Over fifty straight runs on the second robot, the twin passed the planned
+  test but under-predicted, and fixing it worked.* It fell inside the robot's
+  own spread, but the robot went 6 % further on average; on the forty runs
+  that went straight the twin was 8 % short every time. The cause was its
+  caster, modelled as dragging in every direction when driving straight it
+  rolls. With the caster split into rolling and scrubbing, fitted on the
+  spins and five runs, the twin is within 1 % on the straight runs it was not
+  fitted to. A fifth of the runs swerved hard left, which the twin still
+  cannot do.
 - *Short, open-loop turns are not predicted.* In a driven square the twin got
   every side right to within a few centimetres and every corner wrong, by up
   to 39°. The robot itself does not repeat those corners: taken straight
@@ -939,6 +940,7 @@ established.
   [Straight-line drift], [not modelled], [no],
   [Robot 2, 50 straights: planned spread test], [passes; robot +6.0 % on average], [yes, test fixed beforehand],
   [Robot 2, the 40 that went straight], [twin 8 % short, every run], [yes],
+  [Robot 2, caster fixed: the 35 straight test runs], [within 1 %], [fitted on spins and runs 1 to 5],
   [Robot 2, the swerves (10 of 50)], [cannot be produced], [no],
 )
 
@@ -1120,6 +1122,45 @@ changes from run to run: the direction the rear caster faces when the robot
 is put down by hand, one wheel starting late, or the tile joints. Which, is
 not established.
 
+== Round 2: fixing the caster
+
+The goal is a twin that works, so the caster was changed. Its resistance is
+now split in two: *rolling*, along the robot's heading, and *scrubbing*,
+across it, each with its own coefficient. With the rolling one unset, the
+twin is exactly as before, so robot 1 is unaffected.
+
+The fit and the test were written down and committed before the refit
+(`results/robot2/REFIT_PLAN.md`). Scrubbing was fitted to the spins only:
+0.524. Rolling was fitted to the first batch only, runs 1 to 5: 0.227. The
+other 45 runs, which nothing was fitted to, are the test.
+
+#fig("../results/robot2/straights_result_refit.png",
+  [The 45 test runs against the twin with the caster fixed. The straight
+   runs now sit around zero; the swerves, which the twin cannot make, fall
+   below it.])
+
+#table(
+  columns: (1fr, auto, auto),
+  [Test], [Round 1], [Round 2 (runs 6 to 50)],
+  [Spread test], [passes], [*passes*],
+  [Bias, all runs], [+6.0 %], [*−1.5 %* (−3.5 to +0.2 cm)],
+  [Runs that went straight], [twin 8.2 % short], [*twin 0.9 % short*],
+  [Runs that swerved], [−2.9 %], [−9.6 %],
+)
+
+*The caster was the problem.* On the runs that went straight, the twin went
+from 8 % short to under 1 %, with every one within −2.6 to +3.9 cm, so the
+spread test now passes on those runs alone, which round 1 failed. The bias
+over all test runs is no longer clearly different from zero. What remains is
+the swerves: a fifth of the runs, which the twin cannot produce and now
+over-predicts by about 10 %.
+
+The rolling coefficient, 0.227, is well above what a free ball would show. It
+is an effective number, taking up losses the twin does not model separately:
+the tyres' rolling resistance is still assumed, and gearbox efficiency is
+robot 1's. The form of the fix was chosen after seeing all fifty runs; only
+its numbers were fitted blind, and on five runs.
+
 = What changed in the twin
 
 #table(
@@ -1225,9 +1266,8 @@ silently again. The build now runs nineteen and writes nothing if one fails.
   sag at the Jetson, once the 5 V path resistance is included.
 - *Steady motion, calibrated on the same kind of motion.* How fast the wheels
   turn for a given command, how fast the robot spins: to a few percent. How
-  far it goes in a straight line was within 3 % on robot 1, where the drag
-  numbers were fitted on a straight run as well as a spin, and 8 % short on
-  robot 2, where they were fitted on spins alone.
+  far it goes in a straight line: within 3 % on robot 1, and within 1 % on
+  robot 2 once its caster was modelled as rolling and scrubbing.
 - *Transient timing.* How long the wheels take to spin up and to stop.
 - *Design questions.* What happens with the other driver chip, a flat pack,
   a stalled motor, a failed part.
@@ -1239,9 +1279,9 @@ silently again. The build now runs nineteen and writes nothing if one fails.
 - *Straight-line drift, and the swerves.* Not modelled. Robot 2's fifty runs
   show the drift is not one steady motor mismatch: most runs go nearly
   straight and a fifth swerve hard left. One number would not add it.
-- *Carrying a calibration from one kind of motion to another.* Its caster has
-  one drag coefficient, which cannot describe both a caster dragged sideways
-  in a spin and one rolling straight.
+- *Carrying a calibration from one kind of motion to another*, unless the
+  model has a term for each. One drag coefficient for the caster could not
+  describe both a spin and a straight run; two can.
 - *The top of the speed range.* The real motor falls away near full command,
   on robot 2 from a command of 0.6, for a reason not yet identified.
 - *A pack that is not fully charged.* Its resistance changes and the twin's
@@ -1272,8 +1312,9 @@ found, was a single number asked to describe two different things.
 - On robot 1 most quantities were measured once or twice; the exceptions are
   the short turn (24 times) and the wheels-up sweep (twice). On robot 2 the
   straight was run fifty times, but each bench experiment once or twice.
-- The split of robot 2's runs into straight and swerved, and the caster
-  check, were decided after seeing the data.
+- The split of robot 2's runs into straight and swerved, and the form of the
+  caster fix, were decided after seeing the data; the fix's two numbers were
+  fitted on the spins and five runs only, and it was tested on the other 45.
 - Robot 2's drift and turn readings are rough, to about 5 cm and a few
   degrees, and robot 2's gearbox efficiency is robot 1's.
 - The twenty-four short turns were made with the tape on. The tape made
@@ -1288,10 +1329,8 @@ found, was a single number asked to describe two different things.
 
 + *Separate the two explanations for the corners.* A turn after a long pause
   against a turn straight after a side, and right turns as well as left.
-+ *A caster that rolls along its direction of travel and scrubs sideways*,
-  with a drag that depends on how long it has been sliding: the change robot
-  2's straights point to, and a candidate for the corners too. Fit it on the
-  spins and test it on the existing fifty straights.
++ *Test the fixed caster on fresh runs*, and on robot 1, and see whether it
+  helps the short turns and the square's corners too.
 + *Find what makes the robot swerve.* Film the caster close up as runs start,
   and put the robot down with the caster deliberately set each way.
 + *Repeat the fifty straights on another day*, with a marker of measured

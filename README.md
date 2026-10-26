@@ -28,9 +28,11 @@ In one line: on robot 1 the twin predicted steady motion to a few percent
 (straight-line distance within 3 %, a two-second spin within 6 %, both before
 the run) and did not predict short open-loop turns, which the robot itself
 does not repeat. On robot 2, over 50 repeated straights, the twin falls inside
-the robot's own spread (the planned test), but the robot goes 6 % further on
-average, and 8 % further on the 40 runs that went straight, because the
-twin's caster drag, fitted to spins, is too high for rolling straight.
+the robot's own spread (the planned test), but the robot went 6 % further on
+average, and 8 % further on the runs that went straight, because the twin's
+caster dragged in every direction. With the caster split into rolling and
+scrubbing (fitted on the spins and five runs), the twin is within 1 % on the
+straight runs it was not fitted to.
 
 The motors, the driver chip, the pack and the floor drag have been measured on
 this robot. 50 numbers are still estimates, among them the robot's mass.
@@ -198,11 +200,14 @@ See [docs/RESULTS.md](docs/RESULTS.md).
   widen the spread: on the 40 that went straight the robot repeats to 1.8 cm
   and the twin is 8.2 % short every time.
   [results/robot2/RESULTS.md](results/robot2/RESULTS.md)
-- **One caster number cannot serve both a spin and a straight run.** The
-  twin's caster always drags. Fitted to the spins, where it is dragged
-  sideways, it holds the robot back too much when it should be rolling: on
-  the same run the twin gives 1.061 m with the spin's drag, 1.198 m with a
-  freely rolling caster, and the robot did 1.144 m.
+- **One caster number cannot serve both a spin and a straight run, and two
+  can.** The twin's caster used to drag in every direction. Fitted to the
+  spins, where it is dragged sideways, it held the robot back too much when
+  it should be rolling. Split into rolling (0.227, fitted on runs 1 to 5) and
+  scrubbing (0.524, fitted on the spins), the twin went from 8.2 % short to
+  0.9 % on the straight runs 6 to 50, which nothing was fitted to.
+  [results/robot2/REFIT_PLAN.md](results/robot2/REFIT_PLAN.md),
+  `results/calibrated_robot2_caster.json`
 - **The robot swerves now and then, and the twin cannot.** 10 of 50
   identical runs ended 26 to 49 cm to the left, most of them in the second
   half of the session. The cause (the caster's direction when the robot is

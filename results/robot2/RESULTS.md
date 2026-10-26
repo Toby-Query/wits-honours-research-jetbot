@@ -147,3 +147,61 @@ What this says:
 ## To do, if there is time
 - Film a few runs close up at the start, to see what the caster does when
   a swerve begins.
+
+## Round 2: the caster fixed (2026-10-26)
+
+Plan written and committed before the refit: [REFIT_PLAN.md](REFIT_PLAN.md).
+Reproduce:
+
+```bash
+.venv/bin/python tools/refit_caster.py
+.venv/bin/python tools/straights_analysis.py --camera-height 1.01 \
+    --calibration results/calibrated_robot2_caster.json --runs 6-50 --tag refit
+```
+
+**The change.** The twin's caster now resists in two ways: rolling, along
+the robot's heading (`mu_caster_roll`), and scrubbing, across it
+(`mu_caster`). Before, one coefficient applied in every direction. With
+`mu_caster_roll` unset the twin is exactly as before, so robot 1 is
+unaffected.
+
+**The fit.** Scrubbing from spins 2 and 3 only: **0.524** (spins matched to
+7 deg RMS). Rolling from straight runs 1 to 5 only: **0.227** (matched to
+0.9 cm RMS). Nothing else changed. The rolling figure is well above what a
+free ball would show, so it is an effective number: it also takes up losses
+the twin does not model separately (the tyres' rolling resistance is still
+assumed, and gearbox efficiency is robot 1's).
+
+**The test: runs 6 to 50, which nothing was fitted to.** Results in
+`straights_result_refit.json` and `.png`.
+
+| Test | Round 1 (50 runs) | **Round 2 (runs 6 to 50)** |
+|---|---|---|
+| 1. Spread test | pass | **pass** (middle 95 %: -14.5 to +3.9 cm) |
+| 2. Bias, interval over batch means | +6.0 % (+4.6 to +8.0 cm) | **-1.5 % (-3.5 to +0.2 cm)** |
+| 3. Within batches / batch means | 5.5 / 2.4 cm | 5.8 / 2.5 cm (2.6 by chance) |
+| Robot / twin, mean | 1.120 / 1.056 m | 1.117 / 1.134 m |
+
+The split by swerving, as in round 1 (same 25 cm line, the same ten runs):
+
+| | Round 1 | **Round 2** |
+|---|---|---|
+| Went straight (35 test runs) | twin 8.2 % short | **twin 0.9 % short** (+0.3 to +1.7 cm); middle 95 % -2.6 to +3.9 cm |
+| Swerved (10) | -2.9 % | -9.6 % |
+
+**What this says.**
+
+1. **The caster was the problem, and fixing it fixes straight-line distance.**
+   On the runs that went straight, the twin went from 8.2 % short to 0.9 %,
+   with every one of them within -2.6 to +3.9 cm. The spread test now passes
+   on those runs alone, which round 1 failed.
+2. **The overall bias is no longer clearly different from zero** (-1.5 %,
+   interval -3.5 to +0.2 cm). What is left is the swerves pulling the mean
+   down: the twin, which cannot swerve, now over-predicts those ten by 9.6 %.
+3. **The swerves are the twin's remaining limit on straight driving.** They
+   are a fifth of the runs, and the twin has no model of what causes them.
+
+**Caveats.** The form of the fix was chosen after seeing all fifty runs;
+only its numbers were fitted blind (to the spins and batch 1). Five runs is a
+small set to fit the rolling number on. The swerve split is still decided
+after the fact.

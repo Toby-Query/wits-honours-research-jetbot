@@ -1,0 +1,10 @@
+{
+ "r_5v_path": 0.5213429260504124,
+ "cell_r0": 0.07422372018420247,
+ "motor_r": 3.1532691310875682,
+ "motor_rpm_noload": 248.9,
+ "motor_i_noload": 0.1107,
+ "mu_caster": 0.5236168543063163,
+ "_notes": "robot 2, caster refitted as rolling (mu_caster_roll, along the heading) and scrubbing (mu_caster, across it), per results/robot2/REFIT_PLAN.md: scrub from spins 2 and 3, roll from straight runs 1-5 only. Runs 6-50 are the test. Everything else as results/calibrated_robot2.json. robot 2. Motors fitted to the 60 fps wheels-up sweep, holds 0.10-0.60 only (the twin cannot follow robot 2's flattening above 0.6). mu_caster from spins 2 and 3; gear_eff kept from hardware.py (robot 1). No robot-2 straight run used.",
+ "mu_caster_roll": 0.22714854280055316
+}
