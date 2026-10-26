@@ -32,3 +32,11 @@ Each spin is found in the video by the spacing of the logs.
 
 No spin is excluded except for a failed measurement or one marked bad at the
 time, each recorded with its reason.
+
+## Amendment, 2026-10-26 (before any spin was run)
+
+The ten spins are run as one experiment, `spins_10`: ten spins of 2 s, each
+followed by 2 s at rest, without putting the robot back between them (each
+wanders a few centimetres; the camera keeps it in view). One run, one video,
+started by `real run spins_10`. Each spin is measured between the rest before
+it and the rest after it. Everything else above is unchanged.

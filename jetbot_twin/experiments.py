@@ -113,6 +113,12 @@ EXPERIMENTS = {e.name: e for e in [
         measure=["total rotation, degrees",
                  "how far the middle of the axle ended from where it began, m"]),
     Experiment(
+        "spins_10", [(1.0, 0, 0)] + [(2.0, -SPIN, SPIN), (2.0, 0, 0)] * 10,
+        "Ten spins as `spin`, one after another, each followed by 2 s at rest, "
+        "filmed from above in one video. Robot 2's spin test "
+        "(results/robot2/SPINS_PLAN.md). Nothing is fitted to it.",
+        measure=["rotation of each spin, degrees"]),
+    Experiment(
         "step_response", [(1.0, 0, 0), (1.0, FLOOR, FLOOR), (1.5, 0, 0),
                           (1.0, -FLOOR, -FLOOR), (1.5, 0, 0)],
         "Forward then back. Ends near where it started.",
