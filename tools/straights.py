@@ -1,4 +1,5 @@
-"""Drive the `straight_short` experiment again and again, one press of Enter each.
+"""Drive an experiment again and again, one press of Enter each (`straight_short` by default;
+`--experiment spin --folder data/real/spins_robot2 -n 10 --total 10` for the spins).
 
     .venv/bin/python tools/straights.py [-n 5] [--total 50]
 
@@ -83,9 +84,12 @@ def main():
     ap.add_argument("--folder", default=str(ROOT / "data" / "real" / "straights_robot2"))
     ap.add_argument("--countdown", type=int, default=3)
     ap.add_argument("--quiet", action="store_true", help="no spoken run numbers")
+    ap.add_argument("--experiment", default="straight_short",
+                    help="which experiment each run is, e.g. spin (then also give --folder)")
     a = ap.parse_args()
 
-    exp = EXPERIMENTS["straight_short"]
+    exp = EXPERIMENTS[a.experiment]
+    prefix = "straight" if a.experiment == "straight_short" else a.experiment
     folder = Path(a.folder)
     folder.mkdir(parents=True, exist_ok=True)
     index = folder / "runs.csv"
@@ -93,7 +97,7 @@ def main():
 
     done_before = sum(r["status"] == "ok" and r["batch"] != a.batch for r in rows)
     batches = sorted({r["batch"] for r in rows} | {a.batch})
-    print(f"\nStraights: command 0.5 for 1.5 s. Batch {batches.index(a.batch) + 1} "
+    print(f"\n{a.experiment}: {exp.duration:.1f} s a run. Batch {batches.index(a.batch) + 1} "
           f"({a.batch}): {a.n} runs this time; {done_before} of {a.total} "
           "done before today")
     print(f"saving to {folder}")
@@ -135,7 +139,7 @@ def main():
             print("  Enter, b or q")
             continue
 
-        out = folder / f"straight_{number:02d}.csv"
+        out = folder / f"{prefix}_{number:02d}.csv"
         say(f"run {number}", a.quiet)
         started = dt.datetime.now().strftime("%H:%M:%S")
         try:
