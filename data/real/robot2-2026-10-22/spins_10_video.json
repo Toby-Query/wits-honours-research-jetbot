@@ -1,0 +1,66 @@
+{
+ "video": "data/real/robot2-2026-10-22/spins_10.mp4",
+ "spins": [
+  {
+   "spin": 1,
+   "robot_deg": 1012.2,
+   "twin_deg": 1045.2490892059566,
+   "method": "edges; quarters nearest the LED-confirmed spins"
+  },
+  {
+   "spin": 2,
+   "robot_deg": 1048.4,
+   "twin_deg": 1045.0235640050134,
+   "method": "LED + edges"
+  },
+  {
+   "spin": 3,
+   "robot_deg": 1034.4,
+   "twin_deg": 1044.814847948181,
+   "method": "LED + edges"
+  },
+  {
+   "spin": 4,
+   "robot_deg": 1035.7,
+   "twin_deg": 1043.558795129597,
+   "method": "LED + edges"
+  },
+  {
+   "spin": 5,
+   "robot_deg": 1048.0,
+   "twin_deg": 1044.4423570216231,
+   "method": "LED only (+/-8 deg)"
+  },
+  {
+   "spin": 6,
+   "robot_deg": 1014.8,
+   "twin_deg": 1045.338344840863,
+   "method": "LED + edges"
+  },
+  {
+   "spin": 7,
+   "robot_deg": 1061.3,
+   "twin_deg": 1044.1212357312916,
+   "method": "LED + edges"
+  },
+  {
+   "spin": 8,
+   "robot_deg": 1043.1,
+   "twin_deg": 1043.9774201102355,
+   "method": "edges; quarters nearest"
+  },
+  {
+   "spin": 9,
+   "robot_deg": 1048.9,
+   "twin_deg": 1043.8434646860733,
+   "method": "edges; quarters nearest"
+  },
+  {
+   "spin": 10,
+   "robot_deg": 1047.3,
+   "twin_deg": 1043.7185524923152,
+   "method": "edges; quarters nearest"
+  }
+ ],
+ "note": "Edges give the angle to a quarter-turn; the LED (centre-to-LED bearing at rest) gives the quarter count where it shows at both ends. Where it is hidden, the count is the one nearest the LED-confirmed spins (about 1040 deg). Assuming 11 quarters for all was wrong: spins 2 and 4 made 12."
+}

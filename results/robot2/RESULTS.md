@@ -205,3 +205,43 @@ The split by swerving, as in round 1 (same 25 cm line, the same ten runs):
 only its numbers were fitted blind (to the spins and batch 1). Five runs is a
 small set to fit the rolling number on. The swerve split is still decided
 after the fact.
+
+## Short turns and ten spins (2026-10-26)
+
+Plans fixed beforehand: [SHORT_TURNS_PLAN.md](SHORT_TURNS_PLAN.md),
+[SPINS_PLAN.md](SPINS_PLAN.md). Twin: `results/calibrated_robot2_caster.json`,
+nothing fitted to these runs. Measured with `tools/turns_video.py` from
+`short_turns_24.mp4` and `spins_10.mp4` (60 fps, from above).
+
+| | Robot | Twin | Robot minus twin (95 %) |
+|---|---|---|---|
+| 24 short turns (0.29 s at ∓0.3, from rest) | 79.8 deg, sd 16.2 (49 to 101) | 90.3 deg | **−10.5 deg, −11.6 %** (−17.3 to −3.6) |
+| 10 spins (2 s at ∓0.4) | 1039.4 deg, sd 15.6 (1012 to 1061) | 1044.4 deg | **−5.0 deg, −0.5 %** (−16.4 to +6.4) |
+
+**Spins: the twin is right.** Within half a percent on average, inside the
+robot's range, no clear bias, on ten spins nothing was fitted to.
+
+**Short turns: the twin is not, on this robot either.** Robot 2 turns 12 %
+less than its twin, where robot 1 turned 13 % more; and robot 2 is twice as
+erratic from turn to turn (16 deg against 8). The twin's prediction is inside
+the robot's middle 95 % only because that spread is so wide. A 0.3 s turn is
+almost all starting and stopping, which the twin models only roughly, and
+the two robots differ in the direction they miss.
+
+**How the angles were measured, and two mistakes caught.** At rest between
+turns the boards' edges give the angle to a quarter-turn. The whole number
+of quarter-turns:
+
+- *Short turns:* one each, checked on the frame strip
+  (`short_turns_24_sheet.jpg`). The first two alignments of video to log
+  were a whole turn out (the turns repeat every 1.5 s, and the outline
+  flickers at rest); the strip showed each row starting mid-turn. The log is
+  now placed on the video by sliding the pattern of motors-on along the
+  video's motion signal, checked against the last turn's time.
+- *Spins:* assuming 11 quarter-turns each was wrong: spins 2 and 4 made 12.
+  The count now comes from the robot's lit LED, whose bearing from the
+  robot's centre gives the heading all the way round; it agrees with the
+  edges to 8 deg where both show. Where the LED is hidden behind the antenna
+  (spins 1, 8, 9, 10), the count is the one nearest the LED-confirmed spins;
+  spin 5 is the LED alone (±8 deg). Following the edges frame by frame was
+  tried and lost quarters in the motion blur.
