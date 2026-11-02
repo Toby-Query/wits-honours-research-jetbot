@@ -6,6 +6,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
+\usepackage{pdfpages}
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{xcolor}
@@ -71,19 +72,21 @@ A \emph{digital twin} is a virtual model of a specific physical system that
 is kept close enough to it to stand in for it: to predict its behaviour, to
 test changes before they are made, or to detect when the real system departs
 from what is expected \citep{grieves2017digital,tao2019digital}. Reviews of
-the field report that many published twins are never compared quantitatively
-with the system they describe \citep{kritzinger2018digital,jones2020characterising}.
-In robotics the same gap appears as the \emph{reality gap} between simulated
-and real behaviour \citep{jakobi1995noise,koos2013transferability}, which is
-usually worked around by randomising the simulator
-\citep{tobin2017domain,peng2018sim} rather than measured.
+the field find that few published twins exchange data with their physical
+system in both directions \citep{kritzinger2018digital}, and that the
+benefits claimed for twins are rarely validated or quantified
+\citep{jones2020characterising}. In robotics the mismatch between simulated
+and real behaviour is the \emph{reality gap}
+\citep{jakobi1995noise,koos2013transferability}. It is usually worked around
+by randomising the simulator \citep{tobin2017domain,peng2018sim}, and there
+is no common benchmark for measuring it \citep{muratore2022robot}.
 
 A physical robot is an electrical system as much as a mechanical one. Its
 motors turn only as fast as the battery, the protection circuit, the switch
 and the driver chip allow; when the battery runs down or the processor draws
-more power, the motion changes. Robot simulators nevertheless model a motor
-as an ideal torque or speed source \citep{koenig2004design,todorov2012mujoco},
-and circuit simulators stop at the motor terminals \citep{nagel1973spice}. We
+more power, the motion changes. Robot simulators nevertheless drive a motor
+by a force, torque or velocity command \citep{koenig2004design,todorov2012mujoco},
+without its voltage, current and back-EMF, and circuit simulators stop at the motor terminals \citep{nagel1973spice}. We
 build a twin in which the two are one system: at every step the circuit is
 solved for the motor currents given the wheel speeds, and the dynamics move
 the robot given those currents. The circuit model shows whether the
@@ -121,32 +124,37 @@ linked to a physical product throughout its life. \citet{kritzinger2018digital}
 distinguish a \emph{digital model}, a \emph{digital shadow} (data flow from
 the physical object only) and a full twin (data flow both ways), and find
 that most manufacturing ``twins'' are models or shadows. Later reviews
-\citep{fuller2020digital,jones2020characterising,rasheed2020digital} identify
-validation and fidelity as open problems, and \citet{rasheed2020digital}
-argue that physics-based models offer interpretability and extrapolation but
-must be calibrated and checked against data. In these terms our twin is a
+name levels of fidelity \citep{jones2020characterising} and model validation
+\citep{fuller2020digital} as open problems, and \citet{rasheed2020digital}
+argue that physics-based models generalise to problems governed by the same
+physics but can carry large errors from uncertain inputs, so they should be
+combined with measured data. In these terms our twin is a
 digital shadow: the robot's logs condition every replay, but the twin does
-not command the robot. We focus on the part reviews find most often missing,
-measured agreement.
+not command the robot. We focus on measured agreement between the twin and
+its robot.
 
 \subsection{The reality gap}
-\citet{jakobi1995noise} name the reality gap and add noise to simulation so
-that controllers cannot exploit its inaccuracies; \citet{koos2013transferability}
-learn which simulated behaviours transfer. Sim-to-real work in learning-based
-control randomises simulator parameters so that a policy is robust to the gap
-\citep{tobin2017domain,peng2018sim,muratore2022robot}, or learns the most
-influential parts of the model, such as actuator dynamics, from data
-\citep{tan2018sim,hwangbo2019learning}. Surveys \citep{zhao2020sim,muratore2022robot}
-note that the gap is seldom quantified on its own, and \citet{choi2021use}
-identify validation against hardware, and models of contact and friction, as
-central open challenges. We do not train a controller; we measure the gap of
+\citet{jakobi1995noise} popularise the term and show that realistic noise in
+a simulation helps evolved controllers transfer to the real robot;
+\citet{koos2013transferability} learn which simulated behaviours transfer.
+Sim-to-real work in learning-based control randomises the simulator's
+appearance \citep{tobin2017domain} or dynamics
+\citep{peng2018sim,muratore2022robot} so that what is learned is robust to the
+gap, or improves the actuator model, analytically with a DC-motor model
+\citep{tan2018sim} or with a network learned from data
+\citep{hwangbo2019learning}. Surveys \citep{zhao2020sim,muratore2022robot}
+catalogue the methods for crossing the gap, chiefly domain randomisation;
+\citet{muratore2022robot} note that there is no common benchmark for
+sim-to-real transfer and that physics-engine comparisons cover few scenarios,
+and \citet{choi2021use} identify validated simulation, and models of contact
+and friction, as central open challenges. We do not train a controller; we measure the gap of
 one deterministic model term by term.
 
 \subsection{Simulators and circuit models}
 Gazebo \citep{koenig2004design} and MuJoCo \citep{todorov2012mujoco} model
-rigid-body dynamics and contact; comparisons
-\citep{erez2015simulation,collins2021review} show that engines differ most on
-contact and friction. None models the electrical supply. Circuit simulators
+rigid-body dynamics and contact; no engine is best on every test
+\citep{erez2015simulation}, and contact remains hard to simulate accurately
+\citep{erez2015simulation,collins2021review}. None models the electrical supply. Circuit simulators
 descend from SPICE \citep{nagel1973spice} and solve modified nodal analysis
 (MNA) \citep{ho1975modified}. Acausal languages such as Modelica
 \citep{fritzson2014principles} can couple electrical and mechanical domains
@@ -156,15 +164,17 @@ any other code and can be stepped inside a robot simulation loop.
 
 \subsection{Calibration and validation}
 System identification \citep{ljung1999system} estimates model parameters from
-experiments. \citet{kennedy2001bayesian} show that calibrating an inadequate
-model biases its parameters: a wrong model compensates by moving the wrong
+experiments. \citet{kennedy2001bayesian} show that even the best-fitting
+parameters of an inadequate model leave a systematic discrepancy, and
+\citet{brynjarsdottir2014learning} show that calibrating without accounting
+for it biases the parameters: a wrong model compensates by moving the wrong
 numbers. The verification and validation literature
 \citep{oberkampf2010verification,sargent2013verification} separates
 calibration from validation data. For wheeled robots,
 \citet{borenstein1996measurement} separate systematic from non-systematic
-odometry errors by repeated runs, and \citet{siegwart2011introduction} treat
-wheel slip and casters as standard error sources. Preregistering hypotheses
-and analyses \citep{nosek2018preregistration} guards against the undisclosed
+odometry errors by repeated runs, and \citet{siegwart2011introduction} list
+wheel slip and uneven floor contact among the non-systematic error sources. Preregistering hypotheses
+and analyses \citep{nosek2018preregistration} guards against the data-dependent
 choices that make an analysis agree with its data
 \citep{gelman2014statistical}. We adopt it for the main test.
 
@@ -247,7 +257,7 @@ $\omega_z$ and the two wheel speeds. Each motor follows the DC model
 \citep{hughes2019electric}, reflected through the gearbox with an efficiency,
 and each wheel carries the rotor inertia and Coulomb and viscous friction.
 Each tyre transmits a force that saturates at its friction limit,
-$F = \mu_t N \tanh\!\left((r\omega - v_w)/s_0\right)$, a smooth slip curve
+$F = \mu_t N \tanh\!\left((r\omega - v_w)/s_0\right)$, a smooth approximation of the saturating slip curve
 \citep{pacejka2012tire}. The caster is a ball at distance $x_c$ behind the
 axle whose contact point moves at $(v,\, \omega_z x_c)$ in the body frame. As
 first built, it resists with one coefficient $\mu_c$ in every direction;
@@ -340,7 +350,7 @@ square, short turns & floor & nothing (held out) \\
 second twin with nine parameters moved by 10--45\%, seen through noisy
 sensors. It exposes two faults: with the wheel radius free, the fit returns a
 10\,mm wheel while still scoring well on the held-out square
-\citep{kennedy2001bayesian}, and an inferred driver chip is the wrong one.
+\citep{brynjarsdottir2014learning}, and an inferred driver chip is the wrong one.
 After both fixes the procedure recovers every altered value to within 9\%.
 
 \subsection{The preregistered test on robot 2}
@@ -505,7 +515,7 @@ coefficients gives 1.061\,m at 0.506 (the spin fit), 1.113\,m at 0.324 (robot
 mismatch is hidden because gearbox efficiency and caster friction are fitted
 together on a straight and a spin, and the efficiency moves further (0.65 to
 0.51) than a gearbox plausibly would to absorb it, as
-\citet{kennedy2001bayesian} warn.
+\citet{brynjarsdottir2014learning} warn.
 
 We therefore separate rolling and scrubbing (Eq.~\ref{eq:caster}), committing
 the fit and test before refitting: $\mu_\text{scrub}$ from two spins (0.524),
@@ -651,8 +661,8 @@ time. Reporting the bias and the exploratory split alongside the planned test
 is what locates the error. The cause lies in the model's form, one friction
 for two kinds of motion, which calibration alone cannot repair
 \citep{kennedy2001bayesian} and which randomising a single friction
-coefficient \citep{peng2018sim} would not cover; this matches the finding
-that friction and contact are where simulators disagree most
+coefficient \citep{peng2018sim} would not cover; this matches the view
+that contact and friction remain among the hardest phenomena to simulate
 \citep{erez2015simulation,choi2021use}.
 
 \emph{Threats to validity.} We test two robots on one floor, and robot 2's
@@ -696,5 +706,8 @@ the fifty straights on other days and on robot 1. The framework, twin, data
 and analysis scripts are in the project repository.
 
 \bibliography{references}
+
+% Faculty of Science AI declaration, exported from the .docx in the repo root
+\includepdf[pages=-]{ai_declaration.pdf}
 
 \end{document}
