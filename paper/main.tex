@@ -258,8 +258,11 @@ $\omega_z$ and the two wheel speeds. Each motor follows the DC model
 and each wheel carries the rotor inertia and Coulomb and viscous friction.
 Each tyre transmits a force that saturates at its friction limit,
 $F = \mu_t N \tanh\!\left((r\omega - v_w)/s_0\right)$, a smooth approximation of the saturating slip curve
-\citep{pacejka2012tire}. The caster is a ball at distance $x_c$ behind the
-axle whose contact point moves at $(v,\, \omega_z x_c)$ in the body frame. As
+\citep{pacejka2012tire}. The robot has a ball caster ahead of the axle and
+one behind it, and rests on one at a time: on the rear one, except when
+braking tips it onto the front. The loaded caster's contact point, at
+distance $x_c$ from the axle, moves at $(v,\, \omega_z x_c)$ in the body
+frame. As
 first built, it resists with one coefficient $\mu_c$ in every direction;
 Section~\ref{sec:refit} shows why this is replaced by
 \begin{equation}
