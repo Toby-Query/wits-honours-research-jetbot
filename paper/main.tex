@@ -38,9 +38,9 @@ University of the Witwatersrand, Johannesburg, South Africa}}
 \maketitle
 
 \begin{abstract}
-A robot moves only as well as its circuit lets it, yet robot simulators treat
-a motor as an ideal torque source and digital twins of small robots are
-rarely tested against the hardware they copy. We build a digital twin of the
+A robot moves only as well as its circuit lets it, yet robot simulators
+command a motor's torque or speed without modelling the supply that drives
+it. We build a digital twin of the
 Waveshare JetBot in which a circuit-level model of the power electronics,
 written in \emph{elecsim}, a code-first simulation framework we develop, is
 solved together with the robot's dynamics at every step. We verify elecsim

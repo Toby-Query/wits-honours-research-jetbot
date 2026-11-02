@@ -1,5 +1,5 @@
 file=main
-out=2596286_Research_Report
+out=Muthuphei_Mukhunyeledzi_2596286
 
 all:
 	pdflatex -jobname=$(out) $(file).tex
