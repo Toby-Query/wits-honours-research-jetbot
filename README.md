@@ -123,7 +123,36 @@ The repeated straights on robot 2:
 ```
 
 The videos (about 3 GB) are not in git; the per-run measurements taken from
-them are.
+them are. The recordings are on YouTube:
+
+**Robot 1, 2026-10-04**
+
+- Wheels-up sweep: [slow motion](https://youtu.be/Hks8Ap25Ixg), [30 fps](https://youtube.com/shorts/dlQpgflYGEA), [30 fps uncut](https://youtube.com/shorts/4TSg1BByKSE)
+- Spin: [slow motion](https://youtu.be/e-kSG7Q5wLs), [no tape](https://youtube.com/shorts/6w2AfYvHiKg)
+- [Straight](https://youtube.com/shorts/JaOISwOYVc4)
+- Square: [full](https://youtube.com/shorts/yjRyyCO3L1w), [small](https://youtube.com/shorts/fHkI8wR4C_g)
+- Short turns: [short turns](https://youtube.com/shorts/UzHuvuYJSDc), [24 short turns](https://youtube.com/shorts/WAPpSuScwRE)
+- Other clips: [21:41](https://youtube.com/shorts/5wI8DFJsrYw), [22:15](https://youtube.com/shorts/m1C3_gvYq7g), [23:50](https://youtube.com/shorts/gg4KG5atxkU), [23:59](https://youtube.com/shorts/L-wOxsruqBQ)
+
+**Robot 2, 2026-10-22**
+
+- Wheels-up sweep: [slow motion](https://youtu.be/9vW2PujlmsI), [60 fps](https://youtu.be/1jqU4r4AxhU)
+- Spins: [10 spins](https://youtube.com/shorts/YC9dB7a7cWk), [spin 2](https://youtu.be/CpFYQKrSqAM), [spin 3](https://youtube.com/shorts/Ln489i5so7M)
+- [24 short turns](https://youtube.com/shorts/YZnFpT7B874)
+
+**Robot 2, the 50 straights**
+
+[practice](https://youtube.com/shorts/qlCY9WTwrN0) ·
+[batch 01](https://youtube.com/shorts/FlJwqRodZuI) ·
+[02](https://youtube.com/shorts/FhtfBC96c8s) ·
+[03](https://youtube.com/shorts/9YM3NjydUgk) ·
+[04](https://youtube.com/shorts/l0SKAY34qsI) ·
+[05](https://youtube.com/shorts/sMq51eoyPkI) ·
+[06](https://youtube.com/shorts/Jd9EPemVTWk) ·
+[07](https://youtube.com/shorts/DhWcBnOmiwg) ·
+[08](https://youtube.com/shorts/mInXajuh8-U) ·
+[09](https://youtube.com/shorts/Vx50QWq4Gjw) ·
+[10](https://youtube.com/shorts/KN76_-DNpbo)
 
 ## The framework on its own
 
